@@ -1,0 +1,42 @@
+{
+  "exclude": ["node_modules", "build", "shared"],
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }],
+  "buildOptions": {
+    "verbose": true,
+    "traceResolution": true
+  },
+  "compilerOptions": {
+    // "rootDir": "src",
+    "outDir": "build",
+    "declarationDir": "build",
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "jsx": "react-jsx",
+    "jsxImportSource": "nano-jsx/lib",
+    "types": ["node", "vite/client", "nano-jsx/lib"],
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "baseUrl": "./",
+    "paths": {
+      "@src/*": ["src/*"],
+      "@shared/*": ["shared/*"]
+    },
+    // "watch": true,
+    "strict": true,
+    "noEmit": true,
+    "allowJs": false,
+    "declaration": true,
+    "skipLibCheck": true,
+    "noImplicitAny": false,
+    "noUnusedLocals": true,
+    "isolatedModules": true,
+    // "traceResolution": true,
+    "esModuleInterop": false,
+    "resolveJsonModule": true,
+    "useDefineForClassFields": true,
+    "exactOptionalPropertyTypes": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true
+  }
+}
