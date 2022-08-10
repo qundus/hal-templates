@@ -9,7 +9,6 @@ export function Logo(props: Props) {
       <img
         src={props.src}
         class="logo$"
-        // class="h-10rem p-1.5em"
         alt={
           props.alt
             ? props.alt

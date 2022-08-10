@@ -1,40 +1,21 @@
-@import "./shortcuts.css";
-
 :root {
-  @apply font-default text-default leading-default antialiased grayscale;
+  --apply: font-default text-default leading-default antialiased;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-text-size-adjust: 100%;
 }
-html {
-  @apply extend$s p-0 m-0;
-  /* @apply debug$all; */
-}
+html,
 body {
-  @apply flex$ extend$ fight$ min-w-320px min-h-100vh px-2rem m-0 bg-li-3;
+  --apply: min-w-screen min-h-screen trim$w px-0 m-0;
 }
 a {
-  @apply font-medium;
+  --apply: font-medium;
   text-decoration: inherit;
 }
 h1 {
-  @apply text-2.6rem leading-[1.1];
+  --apply: text-2.6rem leading-[1.1];
 }
-button {
-  &:focus,
-  :focus-visible {
-    @apply outline-transparent ring-4px ring-c-3;
-  }
+button:focus,
+button:focus-visible {
+  --apply: outline-transparent ring-4px;
 }
-/* @media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-} */

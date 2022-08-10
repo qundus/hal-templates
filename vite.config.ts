@@ -1,7 +1,6 @@
 import { defineConfig, loadEnv } from "vite";
 import { join } from "path";
-import WindiCSS from "vite-plugin-windicss";
-// import Icons from "unplugin-icons/vite";
+import Unocss from "unocss/vite";
 
 function setup(mode) {
   // necessary to spread mode across app
@@ -31,6 +30,7 @@ function setup(mode) {
     },
   };
 }
+
 // vite config
 export default defineConfig(({ mode }) => {
   const _ = setup(mode);
@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => {
     root: _.root, // must be scoped for hmr speed
     envDir: _.envDir,
     base: "",
-    publicDir: _.pathTo("shared"), // don't create 'assets' dir under here
+    publicDir: _.pathTo("public"), // don't create 'assets' dir under here
     logLevel: "info",
     clearScreen: false,
     emptyOutDir: true,
@@ -51,20 +51,31 @@ export default defineConfig(({ mode }) => {
       outDir: _.pathTo("build"),
       assetsDir: "src", // relative to outDir
       emptyOutDir: true,
+      rollupOptions: {
+        input: {
+          demo: _.pathTo("src", "apps", "demo", "index.html"),
+        },
+      },
     },
     server: {
       host: true,
       port: Number(_.env.VITE_APP_PORT),
       https: false,
-      proxy: _.proxy(),
+      cors: false,
+      open: "/src/apps/demo/index.html",
+      proxy: {
+        ..._.proxy(),
+      },
     },
     preview: {
       host: true,
       port: Number(_.env.VITE_APP_PORT),
       cors: true,
-      open: false,
+      open: "/src/apps/demo/index.html",
       https: false,
-      proxy: _.proxy(),
+      proxy: {
+        ..._.proxy(),
+      },
     },
     resolve: {
       alias: {
@@ -72,15 +83,6 @@ export default defineConfig(({ mode }) => {
         "@shared": _.pathTo("shared"),
       },
     },
-    plugins: [
-      // Icons({ compiler: "jsx", jsx: "preact" }),
-      WindiCSS({
-        config: _.pathTo("windi.config.ts"),
-        scan: {
-          include: [_.pathTo("**", "*.{css,tsx,jsx}")],
-          exclude: [_.pathTo("node_modules"), _.pathTo(".git")],
-        },
-      }),
-    ],
+    plugins: [Unocss()],
   };
 });

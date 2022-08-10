@@ -1,0 +1,12 @@
+/* debug classes are used in root tag <html class="debug$all"> */
+.debug {
+  --debugBorderRadius: 2px;
+  --debugBorderLook: solid;
+  --apply: border-6px border-solid border-red-600;
+  --apply: "hover:(border-dark-600)";
+  background-color: theme("colors.dark.300");
+}
+
+.debug > * {
+  --apply: border- border-solid border-red-600;
+}
