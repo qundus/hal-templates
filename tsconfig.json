@@ -1,5 +1,4 @@
 {
-  "exclude": ["node_modules", "build", "shared"],
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }],
   "buildOptions": {
@@ -7,7 +6,6 @@
     "traceResolution": true
   },
   "compilerOptions": {
-    // "rootDir": "src",
     "outDir": "build",
     "declarationDir": "build",
     "target": "ESNext",
@@ -15,7 +13,7 @@
     "moduleResolution": "Node",
     "jsx": "react-jsx",
     "jsxImportSource": "nano-jsx/lib",
-    "types": ["node", "vite/client", "nano-jsx/lib", "unocss"],
+    "types": ["node", "vite/client", "nano-jsx/lib"],
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "baseUrl": "./",
     "paths": {

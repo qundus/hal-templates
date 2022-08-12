@@ -6,7 +6,7 @@
 }
 html,
 body {
-  --apply: min-w-screen min-h-screen trim$w px-0 m-0;
+  --apply: "min-w-screen min-h-screen trim$w px-0 m-0";
 }
 a {
   --apply: font-medium;

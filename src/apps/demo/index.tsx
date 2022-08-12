@@ -4,40 +4,38 @@ import "uno.css";
 import { render, Component } from "nano-jsx";
 
 // LAST
-import { getThemeContext, ThemeContext } from "@src/contexts";
 import { Button, Logo, ThemeSwitch } from "@src/components";
-
+import { Themes } from "@src/models/theme.model";
 type State = {
   count: number;
+  theme: Themes;
 };
 
 class App extends Component<any, State> {
   constructor(props: any) {
     super(props);
     this.id = "App";
-    this.initState = { count: 0 };
+    this.initState = { count: 0, theme: Themes.Light };
   }
 
-  updateTheme = () => {
-    this.update();
+  updateTheme = (theme: Themes) => {
+    this.setState({ ...this.state, theme }, true);
   };
 
   increaseCount() {
-    this.setState({ count: this.state.count + 1 }, true);
+    this.setState({ ...this.state, count: this.state.count + 1 }, true);
   }
 
   render() {
-    const theme = getThemeContext();
-    console.log("reached theme reload :: ", theme);
+    // add main theme to html tag class
+    document.documentElement.className = "_theme:(bg$bg_text$t))))";
     return (
-      <ThemeContext.Provider value={theme}>
-        <ThemeSwitch callback={this.updateTheme} />
-        <main
-          class={
-            `flex$rows area$ fight$items extend$m theme$app-${theme}`
-            // + Theme.app()
-          }
-        >
+      <>
+        <ThemeSwitch
+          currentTheme={this.state.theme}
+          callback={this.updateTheme}
+        />
+        <main class="flex$rows area$ fight$items extend$m">
           <div class="flex$cols area$ fight$items">
             <Logo
               link="https://vitejs.dev"
@@ -60,15 +58,15 @@ class App extends Component<any, State> {
               count is {this.state.count}
             </Button>
             <p class="mt-5">
-              Edit <code class={`theme$code-${theme}`}>src/app.tsx</code> and
-              save to test HMR
+              Edit <code class="theme:text-M-code">src/app.tsx</code> and save
+              to test HMR
             </p>
           </div>
-          <p class={"fight$self theme$code-" + theme}>
+          <p class="fight$self theme:text-M-code">
             Click on any of the logos to learn more
           </p>
         </main>
-      </ThemeContext.Provider>
+      </>
     );
   }
 }

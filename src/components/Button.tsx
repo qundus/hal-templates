@@ -1,4 +1,3 @@
-import { getThemeContext } from "@src/contexts";
 
 type Props = {
   [key: string]: any;
@@ -10,10 +9,11 @@ export function Button(props: Props) {
 
   return (
     <button
-      _-border="1px rounded solid transparent"
-      _-transition="color duration-[0.25s]"
-      _-text="1.3rem"
-      class={`p-0.6em text-1em font-medium cursor-pointer outline-3 theme$btn-${getThemeContext()}`}
+      _border="1px rounded solid transparent"
+      _transition="color duration-[0.25s]"
+      _text="1.3rem"
+      class="p-0.6em text-1em font-medium cursor-pointer outline-3"
+      __theme="bg$bg_text$t,hover,btn"
       {...props}
     >
       {children}

@@ -1,23 +1,28 @@
-import { getThemeContext, ThemeContext } from "@src/contexts";
-import { Themes } from "@src/models";
+import { Themes } from "@src/models/theme.model";
 
 type Props = {
-  callback(): void;
+  currentTheme: Themes;
+  callback(theme: Themes): void;
 };
 export function ThemeSwitch(props: Props) {
-  const theme = getThemeContext();
+  console.log("current theme :: ", props.currentTheme);
+  // document.documentElement.setAttribute("theme", props.currentTheme);
   const updateTheme = (value: Themes) => {
-    ThemeContext.set(value);
-    props.callback();
+    document.documentElement.setAttribute("theme", value);
+    props.callback(value);
   };
   return (
     <select
       onChange={(e: any) => updateTheme(e.target.value)}
-      class={`absolute w-110px h-50px left-10 top-10 ring-0 outline-0 z-10 rounded px-5 theme$select-${theme}`}
+      class="absolute w-110px h-50px left-10 top-10 ring-0 outline-0 z-10 rounded px-5"
+      __theme="bg$bg_text$t,hover,btn"
     >
       {Object.entries(Themes).map(([k, v]) => {
         return (
-          <option selected={v === theme ? "selected" : undefined} value={v}>
+          <option
+            selected={v === props.currentTheme ? "selected" : undefined}
+            value={v}
+          >
             {k}
           </option>
         );
