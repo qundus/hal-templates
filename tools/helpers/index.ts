@@ -1,10 +1,18 @@
-// never collect imports,
-// it makes vite loading time longer for some reason
-// export { viteSetup } from "./vite.helper";
-// export { makeClasses, makePreflights, makeShortcuts } from "./uno.helper";
 import { join } from "node:path";
 
-// function to help with paths
+/**
+ * function to help with paths
+ */
 export const pathTo = (...paths: string[]) => {
   return join(process.cwd(), ...paths);
 };
+
+/**
+ * allows to choose optional keys of the passed type.
+ */
+export type OptionalK<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>> &
+  Partial<Pick<T, K>>;
+/**
+ * allows to choose specific keys of the passed type.
+ */
+export type PartialK<T, K extends keyof T> = Pick<T, K>; //& Partial<T>;

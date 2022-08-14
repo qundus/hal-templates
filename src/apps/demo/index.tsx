@@ -1,6 +1,6 @@
 // FIRST
 import "uno.css";
-// import 'virtual:unocss-devtools'
+import "virtual:unocss-devtools";
 import { render, Component } from "nano-jsx";
 
 // LAST
@@ -18,8 +18,15 @@ class App extends Component<any, State> {
     this.initState = { count: 0, theme: Themes.Light };
   }
 
+  didMount() {
+    // add main theme to html tag class
+    // document.documentElement.setAttribute("__theme", "bg$bg");
+    document.documentElement.setAttribute("theme", this.state.theme);
+  }
+
   updateTheme = (theme: Themes) => {
-    this.setState({ ...this.state, theme }, true);
+    document.documentElement.setAttribute("theme", theme);
+    this.setState({ ...this.state, theme }, false);
   };
 
   increaseCount() {
@@ -27,8 +34,6 @@ class App extends Component<any, State> {
   }
 
   render() {
-    // add main theme to html tag class
-    document.documentElement.className = "_theme:(bg$bg_text$t))))";
     return (
       <>
         <ThemeSwitch
@@ -58,11 +63,12 @@ class App extends Component<any, State> {
               count is {this.state.count}
             </Button>
             <p class="mt-5">
-              Edit <code class="theme:text-M-code">src/app.tsx</code> and save
-              to test HMR
+              modify
+              <code class="theme:text-code">src/apps/demo/index.tsx</code>to
+              test HMR
             </p>
           </div>
-          <p class="fight$self theme:text-M-code">
+          <p class="fight$self theme:text-t">
             Click on any of the logos to learn more
           </p>
         </main>

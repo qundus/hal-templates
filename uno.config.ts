@@ -14,18 +14,18 @@ import {
 } from "unocss";
 import { colors } from "@unocss/preset-mini/dist/colors.mjs";
 import { pathTo } from "./tools/helpers";
-import { makePreflights, makeTheme } from "./tools/helpers/uno.helper";
+import {
+  makePreflights,
+  makeTheme,
+  _makeClass,
+} from "./tools/helpers/uno.helper";
 
-const mode = process.env.mode;
-// collect and load .css style files
-const { configDeps, layers, preflights } = makePreflights(
-  "src/styles",
-  4,
-  mode ? "dev" : undefined
-);
-const theme = makeTheme("--apply", "theme", "li da ri".split(" "), "M");
-export default defineConfig({
-  include: pathTo("src", "**", "*.{js,ts,jsx,tsx}"),
+const devMode = process.env.inDev;
+const config: UserConfig = {
+  // include: /^.*\.(html|css|js|ts|jsx|tsx)$/,
+  // include: pathTo("src", "**", "*.{jsx,tsx}"),
+  include: "src/**/*.{jsx,tsx}",
+  envMode: devMode ? "dev" : "build",
   presets: [
     presetUno({
       // prefix: "-",
@@ -46,17 +46,6 @@ export default defineConfig({
     transformerVariantGroup({ separators: [":", "-"] }),
     // transformerAttributifyJsx(),
   ],
-  preflights: [...preflights],
-  configDeps: [...configDeps, "tools/helpers/uno.helper.ts"],
-  layers: {
-    components: -1,
-    default: 1,
-    utilities: 2,
-    [theme.layer]: 3,
-    ...layers,
-  },
-  variants: [theme.variant],
-  rules: [...theme.rules],
   shortcuts: [
     {
       flex$: "flex flex-nowrap relative",
@@ -163,7 +152,7 @@ export default defineConfig({
         },
       }, // light
       da: {
-        bg: colors.dark[500], // bg
+        bg: colors.black, // bg
         t: colors.yellow[400], // text
         code: colors.gray[300], // code tag
         select: {
@@ -223,4 +212,23 @@ export default defineConfig({
       },
     },
   },
+};
+
+// collect and load .css style files
+// makePreflights("src/styles");
+_makeClass("bg-bg_text-t|btn-,hover:text-bg", {
+  debug: {
+    style: "class",
+  },
+  // splits: { actionShort: "" },
+  // group: "btn-",
 });
+// console.log(makePreflights("src/styles", { unocssConfig: config }));
+
+// const theme = makeTheme("--apply", "li da ri".split(" "));
+// config.preflights = [...preflights, ...config.preflights],
+//   configDeps: [...configDeps],
+//
+//   variants: [theme.variant],
+//   rules: [...theme.rules],
+export default defineConfig(config);

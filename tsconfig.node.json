@@ -6,5 +6,5 @@
     "moduleResolution": "Node",
     "allowSyntheticDefaultImports": true
   },
-  "include": ["*.config.ts", "tools/helpers"]
+  "include": ["*.config.ts", "tools"]
 }

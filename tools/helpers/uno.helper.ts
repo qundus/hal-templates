@@ -1,131 +1,434 @@
 /**
  * unocss helpers by github.com/neod3v
  * @author neod3v
- */
-import fs from "node:fs";
-import path from "node:path";
-import type { Preflight, Variant, Rule } from "unocss";
-
-/**
  * useful links:
  * https://regex101.com/r/YAEZTX/24
+ * https://devhints.io/jsdoc
+ * https://jsdoc.app/index.html#block-tags
  */
+import { Theme } from "@unocss/preset-mini";
+import fs from "node:fs";
+import path from "node:path";
+import {
+  Preflight,
+  Variant,
+  Rule,
+  UserConfig,
+  mergeDeep,
+  DeepPartial,
+} from "unocss";
+import { transformerDirectives } from "unocss";
+import type { PartialK } from ".";
+
+// -- types
+/**
+ * Config data structure used by functions
+ */
+type Config = {
+  /** [default="_"]
+   * <pre/> a prefix string to exlude files, useful to omit dev styles.  */
+  ignoreFilePrefix: string;
+  /** to debug the created classes. */
+  debug: Partial<{
+    /** [default="*"]
+     * <pre/> used to debug individually created classes.
+     * place it right before any rule likeso "*rule-tag".
+     * this does not get affected by any of the splits.
+     */
+    id: string;
+    /** [default="off"]
+     * <pre/> set the debug style you'd like
+     */
+    style: "all" | "class" | "off";
+  }>;
+  theme: Partial<{
+    mainVar: string;
+    ruleExp: RegExp;
+    /**
+     * <pre/> expression to find the _theme function.
+     */
+    _ruleExp: RegExp;
+    variantExp: RegExp;
+  }>;
+  /** used to split patterns */
+  splits: Partial<{
+    /** [default=","]
+     * <pre/> splits a pattern into multiple smaller patterns  */
+    func: string; // splits function params
+    /** [default="_"]
+     * <pre/> splits a pattern's input like bg-bg_text-t  */
+    param: string; // splits single parameter values
+    /** [default="$"]
+     * <pre/> splits a single rule and color pattern  */
+    rule: string;
+    /** [default="-"]
+     * <pre/> added after group in class, applied when `group` is set. */
+    group: string;
+    /** [default=":"]
+     * <pre/> splits actions to define per action pattern  */
+    action: string;
+    /** [default="$"
+     * <pre/> splits actions to define per action short  */
+    actionShort: string;
+  }>;
+  /** default necessary unocss user configs */
+  unocssConfig: UserConfig;
+};
 
 /**
- * used to split a pattern
+ * Used to define default values across methods
  */
-type Splitters = {
-  tag?: string; // splits a single tag
-  func?: string; // splits function params
-  param?: string; // splits single parameter values
-  action?: string;
-  actionShort: string;
-  actionTags?: string;
-};
-const defaults = {
+const configDefaults: Config = {
+  ignoreFilePrefix: "_",
+  debug: {
+    style: "off",
+    id: "*",
+  },
+  theme: {
+    mainVar: "theme",
+  },
   splits: {
     func: ",",
     param: "_",
-    tag: "$",
+    rule: "-",
+    group: "|",
     action: ":",
     actionShort: "$",
-    actionTags: "|",
-  } as Splitters,
-  filler: "FILLER",
+  },
+  unocssConfig: {
+    layers: {
+      components: -1,
+      default: 1,
+      utilities: 2,
+    },
+  },
 };
 
 // -- core
 /**
- * Make a single unocss class string.
- * @param pattern style in the format `utility$tag`. example: bg$bg results in bg-bg
- * @param o options that format the class string.
- * - separator: to be added after utility like `red` -> bg-red-bg
- * - group: to be added after separator like btn -> bg-red-btn-bg
- * - action: the action short like h for hover and a for active
- * - actionSeparator: the action separator, defaults is `$`
- * - stringAfter: add whatever string or other classes afterwards
- * @returns single unocss class.
+ * Fill in the necessary defaults if user hasn't set those properties.
  */
-export function makeSingle(
-  pattern: string,
-  filler: string,
-  splits: Splitters,
-  group?: string,
-  stringAfter?: boolean | string,
-  action?: string
-): string {
-  splits = { ...defaults.splits, ...splits };
-  const ss = pattern.split(splits.tag);
-  if (ss.length > 2)
-    throw "style can only have 2 tags split by $ in the form `utility$tag`";
-  filler = filler ? filler + "-" : "";
-  group = group ? group + "-" : "";
-  action = action ? `${splits.actionShort}${action}` : "";
-  if (stringAfter) {
-    if (typeof stringAfter === "boolean") stringAfter = " ";
-  } else {
-    stringAfter = "";
+export function _setDefaults(d: DeepPartial<Config>): Config {
+  if (d.splits) {
+    Object.keys(d.splits).forEach((k) => {
+      if (d.splits[k] === undefined || d.splits[k].length <= 0) {
+        console.warn(`${k} splitter cannot be of zero length, 
+        this may lead to memory leaks and/or maximization.`);
+        d.splits[k] = configDefaults.splits[k];
+      }
+    });
   }
-  return `${ss[0]}-${filler}${group}${ss[1]}${action}${stringAfter}`;
+  return mergeDeep(configDefaults, d);
 }
 
-export function makeWhole(pattern: string, filler: string, splits: Splitters) {
-  splits = { ...defaults.splits, ...splits };
-  const params = pattern.split(splits.func);
-  if (!params || params.length <= 0 || !params[0].includes(splits.tag)) {
+/**
+ * Create a single unocss class.
+ * @param p pattern string to formulate unocss class
+ * @param s the splitter used to separate rule from tag
+ * @param i the current index of the pattern if any.
+ * @param g group to add to filler if any.
+ * @param a the action shortcut if any.
+ * @returns a single unocss class.
+ */
+const _makeStyle = (
+  p: string,
+  s: string,
+  i?: number,
+  g?: string,
+  a?: string
+) => {
+  let [rule, tag] = p.split(s);
+  if (!rule || !tag) {
+    console.warn(`style pattern can only have 2 tags split 
+    by ${s} in the form "rule${s}tag"`);
+    return " ";
+  }
+  if (i && i !== 0) rule = ` ${rule}`;
+  return `${rule}${s}${g ? g : ""}${tag}${a ? a : ""}`;
+};
+
+/**
+ * Make a unocss class string.
+ * @param patterns patterns split by config.splits.func
+ * @param config main options to manipulate how the underlying functions work;
+ * @returns a class string to be scanned by unocss.
+ * @example
+ * // "bg-bg"
+ * makeClass("bg$bg")
+ * // "bg-bg text-t"
+ * makeClass("bg$bg_text$t")
+ * // "bg-bg hover:bg-bg$h"
+ * makeClass("bg$bg,hover")
+ * // "bg-bg hover:bg-bg_ho"
+ * makeClass("bg$bg,hover$_ho")
+ * // "bg-bg hover:bg-bg_ho active:bg-bg$a"
+ * makeClass("bg$bg,hover$_ho,active")
+ * // "bg-bg"
+ * makeClass("bg_bg", {splits: {rule: "_"}})
+ */
+export function _makeClass(
+  patterns: string,
+  config?: Partial<PartialK<Config, "debug" | "splits">>
+) {
+  const { splits, debug } = _setDefaults(config);
+  let classes = "";
+  let actions = "";
+  patterns.split(splits.func).forEach((p, i) => {
+    // main classes
+    if (i === 0) {
+      let [pattern, group] = p.split(splits.group);
+      group = group ? group : "";
+      // check if it starts with the debugging string and clean it off
+      if (debug.style === "class" && pattern.startsWith(debug.id)) {
+        pattern = pattern.replace(debug.id, "");
+        classes += debug.id + " ";
+      }
+      pattern.split(splits.param).forEach((t, i) => {
+        classes += _makeStyle(t, splits.rule, i, group);
+      });
+    } else {
+      // actions
+      const [actionAndShort, ownPatterns] = p.split(splits.action);
+      let [action, short] = actionAndShort.split(splits.actionShort);
+      if (!short) short = splits.actionShort + action.charAt(0);
+      if (ownPatterns) {
+        let [pattern, group] = ownPatterns.split(splits.group);
+        group = group ? group : "";
+        pattern.split(splits.param).forEach((t, i) => {
+          if (i !== 0) actions += " ";
+          actions +=
+            action +
+            splits.action +
+            _makeStyle(t, splits.rule, null, group, short);
+        });
+      } else {
+        classes.split(" ").forEach((t, i) => {
+          if (i !== 0) actions += " ";
+          actions += action + splits.action + t + short;
+        });
+      }
+    }
+  });
+  if (classes.length <= 0) {
     console.warn(`cant make style because no tags were provided`);
     return "cant make style because no tags were provided";
   }
-  const tags = params[0].split(splits.param);
-  const actions = params[1] ? params[1].split(splits.param) : undefined;
-  const group = params[2] ? params[2] : "";
-  let style: string = ""; // space before classes
-  tags.forEach((p, i) => {
-    style += makeSingle(p, filler, splits, group, i !== tags.length - 1);
-  });
-  if (actions) {
-    // console.log(actions);
-    actions.forEach((a) => {
-      const as = a.split(splits.action);
-      // console.log(as);
-      let short = as[0].charAt(0);
-      // let actionSplit: string = splits.actionTags;
-      // "$" must be harcoded for consistent usage of this function
-      // if (as[0].includes(actionSplit)) {
-      //   let [action, sep] = as[0].split(actionSplit);
-      //   if (sep && sep.length >= 1) actionSplit = sep;
-      //   as[0] = action;
-      // }
-      let actionStyle = "";
-      // action has it's own tags
-      if (as[as.length - 1].includes(splits.tag)) {
-        if (as.length > 2) short = as[1];
-        as[as.length - 1].split(splits.actionTags).forEach((t, i, arr) => {
-          actionStyle += makeSingle(
-            t,
-            filler,
-            splits,
-            group,
-            i !== arr.length - 1,
-            short
-          );
-        });
-      } else {
-        // console.log(style);
-        if (as.length === 2) short = as[1];
-        style.split(" ").forEach((s, i, arr) => {
-          actionStyle += `${s}${splits.actionShort}${short}${
-            i !== arr.length - 1 ? " " : ""
-          }`;
-        });
-      }
-      style += ` ${as[0]}:(${actionStyle})`;
-    });
+  if (
+    debug.style === "all" ||
+    (debug.style === "class" && classes.startsWith(debug.id))
+  ) {
+    classes = classes.replace(debug.id + " ", "");
+    console.log("==============");
+    console.info("pattern :: ", patterns.replace(debug.id, ""));
+    console.info("classes :: ", classes);
+    console.info("actions :: ", actions);
+    console.info("fullstr :: ", classes, actions);
   }
-  return style;
+  return `${classes} ${actions}`;
 }
 
-// -- specific
+// -- api
+
+/**
+ * affects: `(layers, configDeps, preflights)`
+ * <pre/> Get a list of all css files loaded at build time.
+ * @param config unocss configs to append data generated by this function to.
+ * @param dir directory where all .css files exist
+ * @return extended unocss config that includes preflights loaded.
+ * @example
+ * makePreflights("src/styles", {unocssConfig: config})
+ * // or choose your own prefix
+ * makePreflights("src/styles", {unocssConfig: config, ignoreFilePrefix: "__"})
+ */
+export function makePreflights(
+  dir: string,
+  config: PartialK<Config, "unocssConfig"> &
+    Partial<PartialK<Config, "ignoreFilePrefix">>
+) {
+  const { ignoreFilePrefix, unocssConfig } = _setDefaults(config);
+  const layers = Object.values(unocssConfig.layers);
+  fs.readdirSync(path.join(process.cwd(), dir))?.forEach((dirent) => {
+    const ds = dirent.split(".css");
+    // make sure the file we're loading only `.css` files
+    if (ds.length !== 2 || ds[1].length >= 1) {
+      console.log("the following is not loaded in preflights -> ", dirent);
+      return;
+    }
+    if (ds[0].startsWith(ignoreFilePrefix) && unocssConfig.envMode === "dev")
+      return;
+    const filePath = path.join(dir, dirent);
+    const file = fs.readFileSync(filePath, "utf-8");
+    unocssConfig.layers[ds[0]] = ++layers[layers.length - 1];
+    unocssConfig.configDeps.push(filePath);
+    unocssConfig.preflights.push({
+      layer: ds[0],
+      getCSS: () => file,
+    });
+  });
+  return unocssConfig;
+}
+
+/**
+ * Create a theme function that could be scanned by unocss through variants and rules.
+ * - PS: don't forget to `\<html theme="li">` to dynamically change theme
+ * * - say separator and cssVar:
+ * > "-m-", "--apply"
+ * - say themes:
+ * > "li da".split(" ")
+ * - say theme.colors:
+ * > {li: {bg: white, bg$h: black}, da: {bg:black, bg$h: white}}
+ * - then use them in your app like so:
+ * examples (theme function):
+ * > /<tag class="theme:(bg-m-bg)" />
+ * > /<tag class="theme:(bg-bg)" /> <- or without explicit separator
+ * - generates -> { '--apply': 'bg-li-bg __theme:da:(bg-da-bg) __theme:ri:(bg-ri-bg)' }
+ * examples (_theme function):
+ * > /<tag class="_theme:(bg$bg)" />
+ * > /<tag class="_theme:(bg$bg)" />
+ * - this will generate the following classes
+ * > bg-li-bg theme:da:(bg-da-bg)
+ * - to add hovering colors just add action to class, like so: class="_theme(bg$bg,hover)"
+ * > bg-li-bg hover:(bg-li-bg$h) theme:da:(bg-da-bg hover:(bg-da-bg$h))
+ * - change action separator, class="_theme(bg$bg,hover$___)"
+ * > bg-li-bg hover:(bg-li-bg___h) theme:da:(bg-da-bg hover:(bg-da-bg___h))
+ * - change action short, class="_theme(bg$bg,hover:hov)"
+ * > bg-li-bg hover:(bg-li-bg$hov) theme:da:(bg-da-bg hover:(bg-da-bg$hov))
+ * - add specific action rules, class="_theme(bg$bg,hover:bg$t)"
+ * > bg-li-bg hover:(bg-li-t$h) theme:da:(bg-da-bg hover:(bg-da-t$h))
+ * - chain patterns or actions, class="_theme(bg$bg_text$t,hover$-:ho:bg$t_active)"
+ * @param config unocss configs to append data generated by this function to.
+ * @param ruleVar css variable to apply classes, affected by transformerDirectives. (default=--apply)
+ * @param themes theme names, usually the same as in theme.colors in config file,
+ * first theme is default
+ * @param globalVar the variable that's going to be used at the very top tag
+ * `HTML` to change theme of app as well as creating the rules and variant,
+ * like `theme` -> <html theme="li"> where li is passed in themes array.
+ * (default=theme)
+ * @param separator custom filler to be replaced by theme names later on,
+ * make it short so you can create shorter templates like "M" -> class="theme:(bg-M-bg)"
+ * @param splits splitters used to destructure function.
+ * @param ruleExp expression to find the _theme function,
+ * this one simply replaces the provided filler with theme names.
+ * @param _ruleExp
+ * @param variantExp expression through which unocss will find theme classes
+ * @returns theme variant and rule-set to be added to unocss's config.
+ */
+export function makeTheme(
+  config: UserConfig,
+  ruleVar: string,
+  globalVar?: string,
+  separator?: string,
+  // splits?: Splitters,
+  ruleExp?: RegExp,
+  _ruleExp?: RegExp,
+  variantExp?: RegExp
+): UserConfig {
+  const themes = [];
+  if (!(config.theme as Theme).colors) {
+    console.warn("themes have not been added to your config");
+    console.warn("make sure you setup themes.colors");
+    return config;
+  } else {
+    const values = Object.values(!(config.theme as Theme).colors);
+    console.log(values);
+    return config;
+  }
+
+  if (!themes || themes.length <= 0) {
+    throw "must pass at least one theme name";
+  }
+  // splits = { ...configDefaults.splits, ...splits };
+  // const expr = `[(]?([^(].+[^)])[)]?`;
+  // const conns = "[:-]";
+  // if (!separator) separator = splits.rule;
+  // if (!globalVar) globalVar = configDefaults.themeVar;
+  // if (!ruleExp) ruleExp = new RegExp(`^${globalVar}${conns}${expr}$`);
+  // if (!_ruleExp) _ruleExp = new RegExp(`^_${globalVar}${conns}${expr}$`);
+  // if (!variantExp)
+  //   variantExp = new RegExp(
+  //     `^__${globalVar}${conns}\\b(${themes.join("|")})${conns}${expr}$`
+  //   );
+
+  // const idx = 1;
+  // console.log("===============", ruleExp);
+  // console.log(`// ${variantVar}:(bg$bg)`.match(ruleExp));
+  // console.log(`${variantVar}:((bg$bg)`.match(ruleExp));
+  // console.log(`${variantVar}:(bg$bg))`.match(ruleExp));
+  // console.log(`${variantVar}:(bg$bg)`.match(ruleExp));
+  // console.log(`${variantVar}:bg$bg`.match(ruleExp));
+  // console.log(`${variantVar}:`.match(ruleExp));
+  return config;
+  // variant: (matcher) => {
+  //   const matches = matcher.match(variantExp);
+  //   if (!matches || !themes.includes(matches[1])) {
+  //     return matcher;
+  //   }
+  //   // console.log("from theme variant ::", matches[1]);
+  //   return {
+  //     matcher: matches[2],
+  //     selector: (s) => {
+  //       return `.${matches[1]} ${s}`;
+  //       // return `[${globalVar}="${matches[1]}"] ${s}`;
+  //     },
+  //   };
+  // },
+  // rules: [
+  //   [
+  //     ruleExp,
+  //     ([, match]) => {
+  //       const result = { [ruleVar]: ` "` };
+  //       let style = match.split(separator);
+  //       if (style.length <= 1) {
+  //         console.warn(
+  //           `theme function needs casual unocss classes where fillers are
+  //           going to replaced by theme names, pass something like class="${globalVar}:rule${separator}color"`
+  //         );
+  //         console.warn("match is :: ", match);
+  //         return result;
+  //       }
+  //       // ruleVar value doesn't have to be short and/or
+  //       // readable because it's never seen or loaded.
+  //       themes.forEach((t, i) => {
+  //         t = `${splits.rule}${t}${splits.rule}`;
+  //         if (i === 0) result[ruleVar] += `${style.join(t)}`;
+  //         else result[ruleVar] += ` __theme:${t}:(${style.join(t)})`;
+  //       });
+  //       result[ruleVar] += `"`;
+  //       // console.log(result);
+  //       return result;
+  //     },
+  //     { layer: globalVar },
+  //   ],
+  //   [
+  //     _ruleExp,
+  //     ([, match]) => {
+  //       const result = { [ruleVar]: ` "` };
+  //       let style = makeWhole(match, defaults.filler, splits).split(
+  //         defaults.filler
+  //       );
+  //       if (style.length <= 1) {
+  //         console.warn(
+  //           `theme rule function needs a pattern with a rule${splits.tag}color`
+  //         );
+  //         console.warn("match is :: ", match);
+  //         return result;
+  //       }
+  //       // ruleVar value doesn't have to be short and/or
+  //       // readable because it's never seen or loaded.
+  //       themes.forEach((t, i) => {
+  //         if (i === 0) result[ruleVar] += `${style.join(t)}`;
+  //         else result[ruleVar] += ` __theme:${t}:(${style.join(t)})`;
+  //       });
+  //       result[ruleVar] += `"`;
+
+  //       // console.log(result);
+  //       return result;
+  //     },
+  //     { layer: globalVar },
+  //   ],
+  // ],
+}
+
 /**
  * Create unocss shortcuts and safelists.
  * @param id will be added before every style function name
@@ -148,214 +451,39 @@ export function makeWhole(pattern: string, filler: string, splits: Splitters) {
  * ` bg-li-btn-bg hover:(text-li-btn-t$h border-li-btn-bg)`
  * @returns
  */
-export function makeShortcuts(
-  id: string,
-  replacers: string[],
-  styles: [
-    key: string,
-    pattern: string,
-    actions?: string | undefined,
-    group?: string | undefined
-  ][],
-  splits?: Splitters,
-  filler?: string
-): { safelist: string[]; shortcuts: { [key: string]: string } } {
-  const result = {};
-  splits = { ...defaults.splits, ...splits };
-  if (!filler) filler = defaults.filler;
-  styles.forEach((s) => {
-    const key = s[0];
-    s.shift();
-    // adding spaces before and after to avoid clashing with other user defined styles
-    const style = ` ${makeWhole(s.join(splits.func), filler, splits)} `;
-    // making the shortcut
-    if (replacers) {
-      replacers.forEach((sep) => {
-        result[`${id}${s[0]}${sep}`] = style.split(defaults.filler).join(sep);
-      });
-    } else {
-      result[`${id}${s[0]}`] = style.split(defaults.filler).join("");
-    }
-  });
-  return {
-    safelist: Object.keys(result),
-    shortcuts: result,
-  };
-}
-
-/**
- * Get a list of all css files loaded at build time.
- * @param dir directory where all .css files exist
- * @param layersStartIdx number from which layer count starts
- * @param ignore file names under directory to ignore,
- * useful to omit development .css files from production build
- * @returns preflights, configDeps and layers to be added to unocss's config.
- */
-export function makePreflights(
-  dir: string,
-  layersStartIdx: number,
-  ...ignore: string[]
-) {
-  const configDeps = [];
-  const layers = {};
-  const preflights: Preflight[] = [];
-  fs.readdirSync(path.join(process.cwd(), dir)).forEach((dirent) => {
-    const ds = dirent.split(".");
-    // make sure the file we're loading is of `.css` type
-    if (ds[ds.length - 1] != "css") {
-      console.log("the following is not loaded in preflights", dirent);
-    }
-    if (ignore.includes(ds[0])) return;
-    layers[ds[0]] = layersStartIdx;
-    configDeps.push(path.join(dir, dirent));
-    preflights.push({
-      layer: ds[0],
-      getCSS: () => fs.readFileSync(configDeps[configDeps.length - 1], "utf-8"),
-    });
-    layersStartIdx++;
-  });
-  return {
-    preflights,
-    configDeps,
-    layers,
-  };
-}
-
-/**
- * Create a theme function that could be scanned by unocss through variants and rules.
- * - PS: don't forget to `\<html theme="li">` to dynamically change theme
- * * - say filler:
- * > "M"
- * - say themes:
- * > "li da".split(" ")
- * - say theme.colors:
- * > {li: {bg: white, bg$h: black}, da: {bg:black, bg$h: white}}
- * - then use them in your app like so:
- * examples (theme function):
- * > /<tag class="theme:(bg)" />
- * - theme
- * examples (_theme function):
- * > /<tag class="_theme:(bg$bg)" />
- * > /<tag class="_theme:(bg$bg)" />
- * - this will generate the following classes
- * > bg-li-bg theme:da:(bg-da-bg)
- * - to add hovering colors just add action to class, like so: class="_theme(bg$bg,hover)"
- * > bg-li-bg hover:(bg-li-bg$h) theme:da:(bg-da-bg hover:(bg-da-bg$h))
- * - change action separator, class="_theme(bg$bg,hover$___)"
- * > bg-li-bg hover:(bg-li-bg___h) theme:da:(bg-da-bg hover:(bg-da-bg___h))
- * - change action short, class="_theme(bg$bg,hover:hov)"
- * > bg-li-bg hover:(bg-li-bg$hov) theme:da:(bg-da-bg hover:(bg-da-bg$hov))
- * - add specific action rules, class="_theme(bg$bg,hover:bg$t)"
- * > bg-li-bg hover:(bg-li-t$h) theme:da:(bg-da-bg hover:(bg-da-t$h))
- * - chain patterns or actions, class="_theme(bg$bg_text$t,hover$-:ho:bg$t_active)"
- * @param ruleVar css variable to apply classes, affected by transformerDirectives. (default=--apply)
- * @param variantVar the variable that's going to be used at the very top tag
- * `HTML` to change theme of app, like `theme` -> <html theme="li"> where li is passed
- * in themes array. (default=theme)
- * @param themes theme names, usually the same as in theme.colors in config file,
- * first theme is default
- * @param filler custom filler to be replaced by theme names later on,
- * make it short so you can create shorter templates like "M" -> class="theme:(bg-M-bg)"
- * @param splits splitters used to destructure function.
- * @param ruleExp expression to find the _theme function,
- * this one simply replaces the provided filler with theme names.
- * @param _ruleExp expression to find the theme function,
- * this one works as mentioned in examples above
- * @param variantExp expression through which unocss will find theme classes
- * @returns theme variant and rule-set to be added to unocss's config.
- */
-export function makeTheme(
-  ruleVar: string,
-  variantVar: string,
-  themes: string[],
-  filler?: string,
-  splits?: Splitters,
-  ruleExp?: RegExp,
-  _ruleExp?: RegExp,
-  variantExp?: RegExp
-): { variant: Variant; rules: Rule<{}>[]; layer: string } {
-  if (!themes || themes.length <= 0) {
-    throw "must pass at least one theme name";
-  }
-  const str = "(.*)([^\\W]*?)";
-  if (!ruleExp) ruleExp = new RegExp(`^${variantVar}[:-]${str}$`);
-  if (!_ruleExp) _ruleExp = new RegExp(`^_${variantVar}[:-]${str}$`);
-  if (!variantExp) variantExp = new RegExp(`^__${variantVar}[:-]${str}$`);
-  if (!filler) filler = defaults.filler;
-  splits = { ...defaults.splits, ...splits };
-  return {
-    layer: variantVar,
-    variant: (matcher) => {
-      const matches = matcher.match(variantExp);
-      // console.log("from theme variant ::", matches);
-
-      if (!matches || !themes.includes(matches[2])) {
-        return matcher;
-      }
-      console.log("from theme variant ::", matches[2]);
-      return {
-        matcher: matches[3],
-        selector: (s) => {
-          return `[${variantVar}=${matches[2]}] ${s}`;
-        },
-      };
-    },
-    rules: [
-      [
-        ruleExp,
-        (match) => {
-          console.log("from rule :: ", match);
-          return "";
-          const result = { [ruleVar]: "" };
-          let style = match[2].split(filler);
-          if (style.length <= 1) {
-            console.warn(
-              `theme function needs casual unocss classes where fillers are
-              going to replaced by theme names, pass something like "bg-${filler}-bg"`
-            );
-            console.warn("match is :: ", match);
-            return result;
-          }
-          // ruleVar value doesn't have to be short and/or
-          // readable because it's never seen or loaded.
-          themes.forEach((t, i) => {
-            if (i === 0) result[ruleVar] += `${style.join(t)}`;
-            else result[ruleVar] += ` __theme:${t}:(${style.join(t)})`;
-          });
-          // console.log(result);
-          return result;
-        },
-        { layer: variantVar },
-      ],
-      [
-        _ruleExp,
-        (match) => {
-          console.log("from _ :: ", match);
-
-          return "";
-          const result = { [ruleVar]: "" };
-          let style: string[];
-          style = makeWhole(match[2], defaults.filler, splits).split(
-            defaults.filler
-          );
-          if (style.length <= 1) {
-            console.warn(
-              `theme rule function needs a pattern with a rule${splits.tag}color`
-            );
-            console.warn("match is :: ", match);
-            return result;
-          }
-          // ruleVar value doesn't have to be short and/or
-          // readable because it's never seen or loaded.
-          themes.forEach((t, i) => {
-            if (i === 0) result[ruleVar] += `${style.join(t)}`;
-            else result[ruleVar] += ` __theme:${t}:(${style.join(t)})`;
-          });
-          console.log(result);
-          return result;
-        },
-        { layer: variantVar },
-      ],
-    ],
-  };
-}
+//  export function makeShortcuts(
+//   id: string,
+//   replacers: string[],
+//   styles: [
+//     key: string,
+//     pattern: string,
+//     actions?: string | undefined,
+//     group?: string | undefined
+//   ][],
+//   splits?: Splitters,
+//   filler?: string
+// ): { safelist: string[]; shortcuts: { [key: string]: string } } {
+//   const result = {};
+//   splits = { ...configDefaults.splits, ...splits };
+//   if (!filler) filler = configDefaults.filler;
+//   styles.forEach((s) => {
+//     const key = s[0];
+//     s.shift();
+//     // adding spaces before and after to avoid clashing with other user defined styles
+//     const style = ` ${makeWhole(s.join(splits.func), filler, splits)} `;
+//     // making the shortcut
+//     if (replacers) {
+//       replacers.forEach((sep) => {
+//         result[`${id}${s[0]}${sep}`] = style
+//           .split(configDefaults.filler)
+//           .join(sep);
+//       });
+//     } else {
+//       result[`${id}${s[0]}`] = style.split(configDefaults.filler).join("");
+//     }
+//   });
+//   return {
+//     safelist: Object.keys(result),
+//     shortcuts: result,
+//   };
+// }

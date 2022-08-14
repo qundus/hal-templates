@@ -5,12 +5,7 @@ type Props = {
   callback(theme: Themes): void;
 };
 export function ThemeSwitch(props: Props) {
-  console.log("current theme :: ", props.currentTheme);
-  // document.documentElement.setAttribute("theme", props.currentTheme);
-  const updateTheme = (value: Themes) => {
-    document.documentElement.setAttribute("theme", value);
-    props.callback(value);
-  };
+  const updateTheme = (value: Themes) => props.callback(value);
   return (
     <select
       onChange={(e: any) => updateTheme(e.target.value)}
