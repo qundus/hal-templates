@@ -13,7 +13,7 @@
     "moduleResolution": "Node",
     "jsx": "react-jsx",
     "jsxImportSource": "nano-jsx/lib",
-    "types": ["node", "vite/client", "nano-jsx/lib"],
+    "types": ["node", "vite/client", "nano-jsx/lib", "unocss"],
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "baseUrl": "./",
     "paths": {

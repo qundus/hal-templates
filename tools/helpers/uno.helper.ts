@@ -9,66 +9,104 @@
 import { Theme } from "@unocss/preset-mini";
 import fs from "node:fs";
 import path from "node:path";
-import {
-  Preflight,
-  Variant,
-  Rule,
+import unocss, {
   UserConfig,
   mergeDeep,
   DeepPartial,
+  SourceCodeTransformer,
 } from "unocss";
 import { transformerDirectives } from "unocss";
-import type { PartialK } from ".";
+import type { KeysMaybe, KeysPick } from ".";
 
 // -- types
 /**
  * Config data structure used by functions
  */
 type Config = {
-  /** [default="_"]
-   * <pre/> a prefix string to exlude files, useful to omit dev styles.  */
+  /**
+   * a prefix string to exlude files, useful to omit dev styles.
+   * @default '_'
+   */
   ignoreFilePrefix: string;
   /** to debug the created classes. */
   debug: Partial<{
-    /** [default="*"]
-     * <pre/> used to debug individually created classes.
+    /**
+     * used to debug individually created classes.
      * place it right before any rule likeso "*rule-tag".
      * this does not get affected by any of the splits.
+     * @default "*"
      */
     id: string;
-    /** [default="off"]
-     * <pre/> set the debug style you'd like
-     */
-    style: "all" | "class" | "off";
-  }>;
-  theme: Partial<{
-    mainVar: string;
-    ruleExp: RegExp;
     /**
-     * <pre/> expression to find the _theme function.
+     * set the debug style you'd like
+     * @default "class"
      */
-    _ruleExp: RegExp;
-    variantExp: RegExp;
+    style: "on" | "off" | "class";
+  }>;
+  /** used to affect how rules are created */
+  rule: Partial<{
+    /**
+     * used in front of expression to identify rule
+     */
+    mainVar: string | undefined;
+    /**
+     * used by trasnformDirective().
+     * @default "@apply"
+     */
+    directiveVar: "@apply";
+    /**
+     * any rule created requires the following transformers
+     * to be added to unocss config
+     * @default ["css-directive","variant-group"]
+     */
+    transformerDeps: ["css-directive", "variant-group"];
+    /**
+     * used to create multiple sub groups/variants
+     * @default [""]
+     * */
+    variants: string[];
+    /**
+     * used by rules and variants to identify patterns
+     * @default "[(]?([^(].+[^)])[)]?"
+     */
+    expression: RegExp | string;
+    /**
+     * used to connect rules and variants to patterns
+     * @default "[:-]"
+     */
+    connectors: RegExp | string;
   }>;
   /** used to split patterns */
   splits: Partial<{
-    /** [default=","]
-     * <pre/> splits a pattern into multiple smaller patterns  */
+    /**
+     * splits a pattern into multiple smaller patterns
+     * @default ","
+     */
     func: string; // splits function params
-    /** [default="_"]
-     * <pre/> splits a pattern's input like bg-bg_text-t  */
+    /**
+     * splits a pattern's input like bg-bg_text-t
+     * @default "_"
+     */
     param: string; // splits single parameter values
-    /** [default="$"]
-     * <pre/> splits a single rule and color pattern  */
+    /**
+     * splits a single rule and color pattern
+     * @default "-"
+     */
     rule: string;
-    /** [default="-"]
-     * <pre/> added after group in class, applied when `group` is set. */
+    /**
+     * added after group in class, applied when `group` is set.
+     * @default "-"
+     */
     group: string;
-    /** [default=":"]
-     * <pre/> splits actions to define per action pattern  */
+    /**
+     * splits actions to define per action pattern
+     * @default ":"
+     */
     action: string;
-    /** [default="$"
-     * <pre/> splits actions to define per action short  */
+    /**
+     * splits actions to define per action short
+     * @default "$"
+     */
     actionShort: string;
   }>;
   /** default necessary unocss user configs */
@@ -81,11 +119,16 @@ type Config = {
 const configDefaults: Config = {
   ignoreFilePrefix: "_",
   debug: {
-    style: "off",
+    style: "class",
     id: "*",
   },
-  theme: {
-    mainVar: "theme",
+  rule: {
+    mainVar: undefined,
+    directiveVar: "@apply",
+    transformerDeps: ["css-directive", "variant-group"],
+    variants: [""],
+    expression: "[(]?([^(].+[^)])[)]?",
+    connectors: "[:-]",
   },
   splits: {
     func: ",",
@@ -96,6 +139,8 @@ const configDefaults: Config = {
     actionShort: "$",
   },
   unocssConfig: {
+    variants: [],
+    rules: [],
     layers: {
       components: -1,
       default: 1,
@@ -168,7 +213,7 @@ const _makeStyle = (
  */
 export function _makeClass(
   patterns: string,
-  config?: Partial<PartialK<Config, "debug" | "splits">>
+  config?: KeysMaybe<Config, "debug" | "splits">
 ) {
   const { splits, debug } = _setDefaults(config);
   let classes = "";
@@ -179,9 +224,9 @@ export function _makeClass(
       let [pattern, group] = p.split(splits.group);
       group = group ? group : "";
       // check if it starts with the debugging string and clean it off
-      if (debug.style === "class" && pattern.startsWith(debug.id)) {
+      if (pattern.startsWith(debug.id)) {
         pattern = pattern.replace(debug.id, "");
-        classes += debug.id + " ";
+        debug.style = "on";
       }
       pattern.split(splits.param).forEach((t, i) => {
         classes += _makeStyle(t, splits.rule, i, group);
@@ -213,18 +258,14 @@ export function _makeClass(
     console.warn(`cant make style because no tags were provided`);
     return "cant make style because no tags were provided";
   }
-  if (
-    debug.style === "all" ||
-    (debug.style === "class" && classes.startsWith(debug.id))
-  ) {
-    classes = classes.replace(debug.id + " ", "");
+  if (debug.style === "on") {
     console.log("==============");
     console.info("pattern :: ", patterns.replace(debug.id, ""));
     console.info("classes :: ", classes);
     console.info("actions :: ", actions);
     console.info("fullstr :: ", classes, actions);
   }
-  return `${classes} ${actions}`;
+  return `${classes}${actions ? " " + actions : ""}`;
 }
 
 // -- api
@@ -242,8 +283,7 @@ export function _makeClass(
  */
 export function makePreflights(
   dir: string,
-  config: PartialK<Config, "unocssConfig"> &
-    Partial<PartialK<Config, "ignoreFilePrefix">>
+  config: KeysPick<Config, "unocssConfig", "ignoreFilePrefix">
 ) {
   const { ignoreFilePrefix, unocssConfig } = _setDefaults(config);
   const layers = Object.values(unocssConfig.layers);
@@ -313,120 +353,96 @@ export function makePreflights(
  * @param variantExp expression through which unocss will find theme classes
  * @returns theme variant and rule-set to be added to unocss's config.
  */
-export function makeTheme(
-  config: UserConfig,
-  ruleVar: string,
-  globalVar?: string,
-  separator?: string,
-  // splits?: Splitters,
-  ruleExp?: RegExp,
-  _ruleExp?: RegExp,
-  variantExp?: RegExp
-): UserConfig {
-  const themes = [];
-  if (!(config.theme as Theme).colors) {
-    console.warn("themes have not been added to your config");
-    console.warn("make sure you setup themes.colors");
-    return config;
-  } else {
-    const values = Object.values(!(config.theme as Theme).colors);
-    console.log(values);
-    return config;
+export function makeThemeRules(
+  config: KeysPick<Config, "unocssConfig", "debug" | "rule" | "splits">
+) {
+  const { unocssConfig, debug, rule, splits } = _setDefaults(config);
+  // check if needed transformers exist
+  {
+    const transformersNames = Object.values(unocssConfig.transformers).map(
+      (t) => t.name
+    );
+    rule.transformerDeps.forEach((t) => {
+      if (!transformersNames.includes(t)) {
+        throw Error(
+          "can't make rule without " +
+            t +
+            " transformer, please add it to your unocss config."
+        );
+      }
+    });
   }
-
-  if (!themes || themes.length <= 0) {
-    throw "must pass at least one theme name";
+  if (!rule.mainVar || rule.mainVar.length <= 0) rule.mainVar = "theme";
+  const ruleExp = new RegExp(
+    "^" + rule.mainVar + rule.connectors + rule.expression + "$"
+  );
+  const _ruleExp = new RegExp(
+    "^_" + rule.mainVar + rule.connectors + rule.expression + "$"
+  );
+  const variantExp = new RegExp(
+    "^__" +
+      rule.mainVar +
+      rule.connectors +
+      `\\b(${rule.variants.join("|")})` +
+      rule.connectors +
+      rule.expression +
+      "$"
+  );
+  // prepare variants
+  rule.variants.forEach((v, i, arr) => {
+    if (v.length <= 0) arr[i] = splits.rule;
+    else arr[i] = splits.rule + v + splits.rule;
+  });
+  // add theme layer to main themes
+  {
+    const layers = Object.values(unocssConfig.layers);
+    unocssConfig.layers[rule.mainVar] = layers[layers.length - 1] + 1;
   }
-  // splits = { ...configDefaults.splits, ...splits };
-  // const expr = `[(]?([^(].+[^)])[)]?`;
-  // const conns = "[:-]";
-  // if (!separator) separator = splits.rule;
-  // if (!globalVar) globalVar = configDefaults.themeVar;
-  // if (!ruleExp) ruleExp = new RegExp(`^${globalVar}${conns}${expr}$`);
-  // if (!_ruleExp) _ruleExp = new RegExp(`^_${globalVar}${conns}${expr}$`);
-  // if (!variantExp)
-  //   variantExp = new RegExp(
-  //     `^__${globalVar}${conns}\\b(${themes.join("|")})${conns}${expr}$`
-  //   );
+  // make variants
+  unocssConfig.variants.push((matcher) => {
+    const matches = matcher.match(variantExp);
+    if (!matches) {
+      return matcher;
+    }
+    return {
+      matcher: matches[2],
+      selector: (s) => {
+        // return `.${matches[1]} ${s}`;
+        return `[${rule.mainVar}="${matches[1]}"] ${s}`;
+      },
+    };
+  });
 
-  // const idx = 1;
-  // console.log("===============", ruleExp);
-  // console.log(`// ${variantVar}:(bg$bg)`.match(ruleExp));
-  // console.log(`${variantVar}:((bg$bg)`.match(ruleExp));
-  // console.log(`${variantVar}:(bg$bg))`.match(ruleExp));
-  // console.log(`${variantVar}:(bg$bg)`.match(ruleExp));
-  // console.log(`${variantVar}:bg$bg`.match(ruleExp));
-  // console.log(`${variantVar}:`.match(ruleExp));
-  return config;
-  // variant: (matcher) => {
-  //   const matches = matcher.match(variantExp);
-  //   if (!matches || !themes.includes(matches[1])) {
-  //     return matcher;
-  //   }
-  //   // console.log("from theme variant ::", matches[1]);
-  //   return {
-  //     matcher: matches[2],
-  //     selector: (s) => {
-  //       return `.${matches[1]} ${s}`;
-  //       // return `[${globalVar}="${matches[1]}"] ${s}`;
-  //     },
-  //   };
-  // },
-  // rules: [
-  //   [
-  //     ruleExp,
-  //     ([, match]) => {
-  //       const result = { [ruleVar]: ` "` };
-  //       let style = match.split(separator);
-  //       if (style.length <= 1) {
-  //         console.warn(
-  //           `theme function needs casual unocss classes where fillers are
-  //           going to replaced by theme names, pass something like class="${globalVar}:rule${separator}color"`
-  //         );
-  //         console.warn("match is :: ", match);
-  //         return result;
-  //       }
-  //       // ruleVar value doesn't have to be short and/or
-  //       // readable because it's never seen or loaded.
-  //       themes.forEach((t, i) => {
-  //         t = `${splits.rule}${t}${splits.rule}`;
-  //         if (i === 0) result[ruleVar] += `${style.join(t)}`;
-  //         else result[ruleVar] += ` __theme:${t}:(${style.join(t)})`;
-  //       });
-  //       result[ruleVar] += `"`;
-  //       // console.log(result);
-  //       return result;
-  //     },
-  //     { layer: globalVar },
-  //   ],
-  //   [
-  //     _ruleExp,
-  //     ([, match]) => {
-  //       const result = { [ruleVar]: ` "` };
-  //       let style = makeWhole(match, defaults.filler, splits).split(
-  //         defaults.filler
-  //       );
-  //       if (style.length <= 1) {
-  //         console.warn(
-  //           `theme rule function needs a pattern with a rule${splits.tag}color`
-  //         );
-  //         console.warn("match is :: ", match);
-  //         return result;
-  //       }
-  //       // ruleVar value doesn't have to be short and/or
-  //       // readable because it's never seen or loaded.
-  //       themes.forEach((t, i) => {
-  //         if (i === 0) result[ruleVar] += `${style.join(t)}`;
-  //         else result[ruleVar] += ` __theme:${t}:(${style.join(t)})`;
-  //       });
-  //       result[ruleVar] += `"`;
-
-  //       // console.log(result);
-  //       return result;
-  //     },
-  //     { layer: globalVar },
-  //   ],
-  // ],
+  // make rule
+  unocssConfig.rules.push([
+    ruleExp,
+    ([, match]) => {
+      const result = { [rule.directiveVar]: ` "` };
+      let style = _makeClass(match, { splits, debug }).split(splits.rule);
+      if (style.length <= 1) {
+        console.warn(
+          "theme rule function needs a pattern with a rule" +
+            splits.rule +
+            "color"
+        );
+        console.warn("match is :: ", match);
+        return result + `"`;
+      }
+      // ruleVar value doesn't have to be short and/or
+      // readable because it's never seen or loaded.
+      rule.variants.forEach((t, i) => {
+        if (i === 0) result[rule.directiveVar] += `${style.join(t)}`;
+        else
+          result[rule.directiveVar] +=
+            " __" + rule.mainVar + t + "(" + style.join(t) + ")";
+      });
+      result[rule.directiveVar] += `"`;
+      // console.log(result);
+      return result;
+    },
+    { layer: rule.mainVar },
+  ]);
+  return unocssConfig;
 }
 
 /**

@@ -16,12 +16,12 @@ import { colors } from "@unocss/preset-mini/dist/colors.mjs";
 import { pathTo } from "./tools/helpers";
 import {
   makePreflights,
-  makeTheme,
+  makeThemeRules,
   _makeClass,
 } from "./tools/helpers/uno.helper";
 
 const devMode = process.env.inDev;
-const config: UserConfig = {
+let config: UserConfig = {
   // include: /^.*\.(html|css|js|ts|jsx|tsx)$/,
   // include: pathTo("src", "**", "*.{jsx,tsx}"),
   include: "src/**/*.{jsx,tsx}",
@@ -216,19 +216,17 @@ const config: UserConfig = {
 
 // collect and load .css style files
 // makePreflights("src/styles");
-_makeClass("bg-bg_text-t|btn-,hover:text-bg", {
-  debug: {
-    style: "class",
-  },
-  // splits: { actionShort: "" },
-  // group: "btn-",
-});
+// _makeClass("bg-bg_text-t|btn-,hover:text-bg", {
+// debug: {
+//   style: "class",
+// },
+// splits: { actionShort: "" },
+// group: "btn-",
+// });
 // console.log(makePreflights("src/styles", { unocssConfig: config }));
 
-// const theme = makeTheme("--apply", "li da ri".split(" "));
-// config.preflights = [...preflights, ...config.preflights],
-//   configDeps: [...configDeps],
-//
-//   variants: [theme.variant],
-//   rules: [...theme.rules],
+config = makeThemeRules({
+  unocssConfig: config,
+  rule: { variants: "li da ri".split(" ") },
+});
 export default defineConfig(config);

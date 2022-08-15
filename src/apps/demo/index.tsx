@@ -40,7 +40,7 @@ class App extends Component<any, State> {
           currentTheme={this.state.theme}
           callback={this.updateTheme}
         />
-        <main class="flex$rows area$ fight$items extend$m">
+        <main class="flex$rows area$ fight$items extend$m ">
           <div class="flex$cols area$ fight$items">
             <Logo
               link="https://vitejs.dev"
@@ -68,9 +68,7 @@ class App extends Component<any, State> {
               test HMR
             </p>
           </div>
-          <p class="fight$self theme:text-t">
-            Click on any of the logos to learn more
-          </p>
+          <p class="fight$self">Click on any of the logos to learn more</p>
         </main>
       </>
     );
