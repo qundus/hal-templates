@@ -13,11 +13,12 @@ import {
   transformerAttributifyJsx,
 } from "unocss";
 import { colors } from "@unocss/preset-mini/dist/colors.mjs";
-import { pathTo } from "./tools/helpers";
+// import { pathTo } from "./tools/helpers";
 import {
   makePreflights,
   makeThemeRules,
   _makeClass,
+  _makeRegex,
 } from "./tools/helpers/uno.helper";
 
 const devMode = process.env.inDev;
@@ -225,8 +226,51 @@ let config: UserConfig = {
 // });
 // console.log(makePreflights("src/styles", { unocssConfig: config }));
 
-config = makeThemeRules({
-  unocssConfig: config,
-  rule: { variants: "li da ri".split(" ") },
+// config = makeThemeRules({
+//   unocssConfig: config,
+//   rule: { variants: "li da ri".split(" ") },
+// });
+
+// _makeClass("bg$bg_text-tGROUPgg-,hover");
+const expr = _makeRegex({
+  regex: [
+    {
+      ids: ["theme", "_theme"],
+      // idStyle: "inside",
+      // optional: true,
+      idPostfix: "[:-]",
+      groupName: "var",
+      match: "",
+      // optional: true,
+    },
+    {
+      ids: "li|da",
+      idPostfix: "[:-]",
+      idStyle: "inside",
+      optional: true,
+      groupName: "theme",
+    },
+    {
+      ids: "",
+      groupName: "pattern",
+      // idPrefix: "[:-][(]?",
+    },
+  ],
 });
+// const expr = new RegExp(
+//   `^(?:(?:theme|_theme)(?:[:-]))(?<var>.*?|)(?:li[:-]|)(?<theme>(?<=li[:-]).*?|)$`
+// );
+console.log(expr);
+console.log("asad".match(expr));
+// console.log("theme:li:".match(expr));
+// console.log("(?: (?:) )".replace(/.$/g, "|)"));
+// console.log("theme:sdaadsd".match(expr));
+// console.log("theme:li".match(expr));
+// console.log("theme:li:ddasd".match(expr));
+// let expr: string | RegExp = `^(?<classes>.*?)`;
+// expr += `(([|]|GROUP)(?<group>.*?)|)`;
+// expr += `(([,])(?<actions>.*?)|)$`;
+// expr = new RegExp(expr);
+// console.log(expr);
+// console.log("bg$bg_text-t|gg".match(expr));
 export default defineConfig(config);

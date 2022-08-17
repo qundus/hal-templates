@@ -29,6 +29,7 @@
     "noImplicitAny": false,
     "noUnusedLocals": true,
     "isolatedModules": true,
+    // "downlevelIteration": true,
     // "traceResolution": true,
     "esModuleInterop": false,
     "resolveJsonModule": true,
