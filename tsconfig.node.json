@@ -5,6 +5,7 @@
     "module": "ESNext",
     "moduleResolution": "Node",
     "allowSyntheticDefaultImports": true
+    // "strictNullChecks": true
   },
   "include": ["*.config.ts", "tools"]
 }

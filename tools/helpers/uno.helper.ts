@@ -11,64 +11,68 @@ import fs from "node:fs";
 import path from "node:path";
 import { UserConfig, mergeDeep, DeepPartial } from "unocss";
 import { transformerDirectives } from "unocss";
-import type { Keys, KeysMaybe, KeysPick } from ".";
+import type { DeepVoid, Keys, KeysMaybe, KeysPick } from ".";
 
 // -- types
 /**
- * Config data structure used by functions
+ * Used to define config type as well as default values
+ * across methods.
  */
-type Config = {
+const configDefaults = {
   /**
    * to indicate that this config has been merged with
    * defaults.
-   * @default false
+   * @default true
    */
-  mergedDefaults: boolean;
+  mergedDefaults: true as boolean,
   /** to debug the created classes. */
-  debug: Partial<{
+  debug: {
     /**
      * used to debug individually created classes.
      * place it right before any rule likeso "*rule-tag".
      * this does not get affected by any of the splits.
      * @default "*"
      */
-    id: string;
+    id: "*",
     /**
      * set the debug style you'd like
      * @default "class"
      */
-    style: "on" | "off" | "class";
-  }>;
+    style: "class" as "on" | "off" | "class",
+  },
   /** used to conditionalize runtime environment */
-  ignore: Partial<{
+  ignore: {
     /**
      * a prefix string to exlude files, useful to omit dev styles.
      * @default '_'
      */
-    devFilePrefix: string;
-  }>;
+    devFilePrefix: "_",
+  },
   /** used to affect how rules are created */
-  rule: Partial<{
+  rule: {
     /**
      * used in front of expression to identify rule
      */
-    mainVar: string | undefined;
+    mainVar: undefined as string | void,
     /**
      * used by trasnformDirective().
      * @default "@apply"
      */
-    directiveVar: "@apply";
+    directiveVar: "@apply",
     /**
      * any rule created requires the following transformers
      * to be added to unocss config
      * @default ["css-directive","variant-group"]
      */
-    transformerDeps: ["css-directive", "variant-group"];
+    transformerDeps: ["css-directive", "variant-group"] as [
+      "css-directive",
+      "variant-group"
+    ],
     /**
      * used to create multiple sub groups/variants
      * @default [""]
      * */
-    variants: string[];
+    variants: [""],
     /**
      * style that 'variants' get grouped under.
      * @example
@@ -84,122 +88,118 @@ type Config = {
      * .li-theme\:\(bg-bg\) {style}
      * @default "variable"
      * */
-    variantStyle: "variable" | "class" | "class-attached" | "variant-prefix";
+    variantStyle: "variable" as
+      | "variable"
+      | "class"
+      | "class-attached"
+      | "variant-prefix",
     /**
      * used by rules and variants to identify patterns
      * @default "[(]?([^(].+[^)])[)]?"
      */
-    expression: RegExp | string;
+    expression: "[(]?([^(].+[^)])[)]?" as string | RegExp,
     /**
      * used to connect rules and variants to patterns
      * @default "[:-]"
      */
-    connectors: RegExp | string;
-  }>;
+    connectors: "[:-]" as string | RegExp,
+  },
   /** used to create regex expressions  */
-  regex:
-    | ({
-        /**
-         * used to identify groups or pattern, setting this is highly important
-         * to shrink the pool of matches.
-         * @example
-         * [{ids: "var1|var2"}]
-         * [{ids: ["var1","var2"]}]
-         * [{ids: ["var1[:-]","var2"]}] <- add regex to it
-         */
-        ids: string | string[];
-      } & Partial<{
-        /**
-         * name the resulting group so it can be referenced easier
-         * later on through string.match(expr).groups
-         * @default
-         * "group_<index>"
-         */
-        groupName: string;
-        /**
-         * a regex to match strings, set to an empty string with idStyle
-         *
-         */
-        match: string;
-        idStyle: "inside" | "insideEnd" | "outside" | "outsideEnd";
-        optional: boolean;
-        idPrefix: string;
-        idPostfix: string;
-      }>)[]
-    | undefined;
+  regex: {
+    /**
+     * used to identify groups or pattern, setting this is highly important
+     * to shrink the pool of matches and they are omitted from match array
+     * unless `idStyle=inside|insideEnd`.
+     * @example
+     * [{ids: "var1|var2"}]
+     * [{ids: ["var1","var2"]}]
+     * [{ids: ["var1[:-]","var2"]}] <- add regex to it
+     */
+    ids: undefined as string | string[] | void,
+    /**
+     * name the resulting group so it can be referenced easier
+     * later on through string.match(expr).groups
+     * @default
+     * "group_<index>"
+     */
+    groupName: undefined as string | "numberGroup",
+    /**
+     * the main group matching string, set to an empty string with
+     * idStyle 'outside' to completely remove the group
+     * @default
+     * ".*?" // match everything except next group ids if any
+     */
+    match: ".*?" as string | ".*?" | ".+?",
+    /**
+     * make this group optional, if set, regex match would allow
+     * for it to be skipped and matched only if ids and are there.
+     * @default
+     * false
+     */
+    optional: false as boolean,
+    /**
+     * ids are the identefying parts of the group, these styles let you
+     * choose whether to include them in group or not.
+     * - "inside" match ids inside of group before 'match'
+     * <pre/> (?<group>(ids)match)
+     * - "insideEnd" match ids inside of group after 'match'
+     * <pre/> (?<group>match(ids))
+     * - "outside" match ids outside before group
+     * <pre/> (ids)(?<group>(?<=(ids))match)
+     * - "outsideEnd" match ids outside after group
+     * <pre/> (?<group>match(?=(ids)))(ids)
+     * @default
+     * "outside"
+     */
+    idStyle: "outside" as "inside" | "insideEnd" | "outside" | "outsideEnd",
+    /**
+     * prefix all ids with certain regex pattern.
+     */
+    idPrefix: "",
+    /**
+     * postfix all ids with certain regex pattern.
+     */
+    idPostfix: "",
+  },
   /** used to split patterns */
-  splits: Partial<{
+  splits: {
     /**
      * splits a pattern into multiple smaller patterns
-     * @default ","
+     * @default "[,]|FUNC"
      */
-    func: string; // splits function params
+    func: "[,]|FUNC" as string,
     /**
-     * splits a pattern's input like bg-bg_text-t
-     * @default "_"
+     * added after group in class, applied when `group` is set.
+     * @default "[|]|GROUP"
      */
-    param: string; // splits single parameter values
+    group: "[|]|GROUP" as string,
     /**
      * splits a single rule and color pattern
      * @default "-"
      */
-    rule: string;
+    rule: "[-$]" as string,
     /**
-     * added after group in class, applied when `group` is set.
-     * @default "|"
+     * splits a pattern's input like bg-bg_text-t
+     * @default "[_]"
      */
-    group: string;
+    param: "[_]" as string,
     /**
      * splits actions to define per action pattern
-     * @default ":"
+     * @default "[:]"
      */
-    action: string;
+    action: "[:]" as string,
+    /**
+     * splits actions to define per action short
+     * @default "[$]"
+     */
+    actionShort: "[$]" as string,
     /**
      * splits variants to define subgroups
      * @default ":"
      */
-    variant: string;
-    /**
-     * splits actions to define per action short
-     * @default "$"
-     */
-    actionShort: string;
-  }>;
+    variant: ":" as string,
+  },
   /** default necessary unocss user configs */
-  unocssConfig: UserConfig;
-};
-
-/**
- * Used to define default values across methods
- */
-const configDefaults: Config = {
-  mergedDefaults: true,
-  debug: {
-    style: "class",
-    id: "*",
-  },
-  ignore: {
-    devFilePrefix: "_",
-  },
-  rule: {
-    mainVar: undefined,
-    directiveVar: "@apply",
-    transformerDeps: ["css-directive", "variant-group"],
-    variants: [""],
-    variantStyle: "variable",
-    expression: "[(]?([^(].+[^)])[)]?",
-    connectors: "[:-]",
-  },
-  regex: undefined,
-  splits: {
-    func: "[,]|FUNC",
-    group: "[|]|GROUP",
-    rule: "[-$]",
-    param: "[_]",
-    action: "[:]",
-    actionShort: "[$]",
-    variant: ":",
-  },
   unocssConfig: {
     variants: [],
     rules: [],
@@ -208,127 +208,92 @@ const configDefaults: Config = {
       default: 1,
       utilities: 2,
     },
-  },
+  } as UserConfig,
 };
+type Config = DeepVoid<typeof configDefaults, "unocssConfig", null, UserConfig>;
+type ConfigPick<T extends keyof Config> = Pick<Config, T>;
 
 // -- core
 /**
  * Fill in the necessary defaults if user hasn't set those properties,
  * only if mergedDefaults is false to avoid duplicate merging
  */
-export function _mergeDefaults(d: DeepPartial<Config>): Config {
+export function _mergeDefaults(d: Config): Config {
   if (d.mergedDefaults) return d as Config;
-  if (d && d.splits) {
+  if (d.splits) {
     Object.keys(d.splits).forEach((k) => {
       if (d.splits[k] === undefined || d.splits[k].length <= 0) {
-        console.warn(`${k} splitter cannot be of zero length, 
+        console.warn(`${k} splitter cannot be of zero length,
         this may lead to memory leaks and/or maximization.`);
         d.splits[k] = configDefaults.splits[k];
       }
     });
   }
-  return mergeDeep(configDefaults, d);
+  return mergeDeep(configDefaults as Config, d);
 }
 
-const makeRegex = (
-  variables: string[],
-  connectors: string,
-  variants?: string[],
-  sanitizers?: Partial<{
-    before: string | "[(]?[\\W]*";
-    mid: string;
-    after: string | "[\\W]*[)]?";
-  }>
-) => {
-  if (!variables || variables.length <= 0) {
-    throw Error(`makeRegex: must have at least one identifying variable`);
-  }
-  if (!connectors || connectors.length <= 0) {
-    throw Error(`makeRegex: must have at least one separating connector`);
-  }
-  if (!sanitizers) sanitizers = {};
-  if (!sanitizers.before) sanitizers.before = "(?<sanitizeBefore>[(]?)";
-  if (!sanitizers.after) sanitizers.after = "(?<sanitizeAfter>[)]?)";
-  if (!sanitizers.mid) sanitizers.mid = "[^\\W].+[^\\W]";
-  connectors = `[${connectors}]`;
-  if (!variants || variants[0].length <= 0) variants = [];
-  // optimized loop instead of separate .map for each one
-  for (let i = 0; i < variables.length || i < variants.length; i++) {
-    if (i < variables.length) {
-      variables[i] += connectors;
-    }
-    if (i < variants.length) {
-      variants[i] += connectors;
-    }
-  }
-  const expr = new RegExp(
-    `^\\b(?<var>${variables.join("|")})` +
-      `(?<variant>${variants.join("|")}|)` +
-      `${sanitizers.before}(?<pattern>${sanitizers.mid})${sanitizers.after}$`
-  );
-  return expr;
-};
+export function _makeRegex(_: ConfigPick<"">) {
+  const { regex } = _mergeDefaults(_);
 
-export function _makeRegex(config: Keys<Config, "regex">) {
-  const { regex } = _mergeDefaults(config);
+  // console.log(config);
   let temp = "";
-  return new RegExp(
-    regex
-      .map((r, i) => {
-        let { ids, groupName, idPrefix, idPostfix } = r;
-        let { idStyle, optional, match } = r;
-        // error checks first
-        if (typeof ids !== "string") ids = ids.join("|");
-        if (match === undefined) match = ".*?"; // note: the "?" is very important to separate next group
-        if (ids.length <= 0 && match.length <= 0)
-          throw Error(
-            "makeRegex: cannot have an empty ids and match patterns, please provide atleast one."
-          );
-        // we're good
-        idPrefix = idPrefix ? `(?:${idPrefix})` : ``;
-        idPostfix = idPostfix ? `(?:${idPostfix})` : ``;
-        groupName = groupName ? `(?<${groupName}>` : `(?<group_${i}>`;
-        idStyle = idStyle ? idStyle : "outside";
-        if (idPrefix.length <= 0 && ids.length <= 0 && idPostfix.length <= 0)
-          ids = "";
-        else ids = `(?:${idPrefix}(?:${ids})${idPostfix})`;
-        // if (ids.match(/^\(\?\:[|]*\s*[|]*\)$/g)) ids = "";
+  // return new RegExp(
+  //   regex
+  //     .map((r, i) => {
+  //       let { ids, groupName, idPrefix, idPostfix } = r;
+  //       let { idStyle, optional, match } = r;
+  //       // error checks first
+  //       if (typeof ids !== "string") ids = ids.join("|");
+  //       if (match === undefined) match = ".*?"; // note: the "?" is very important to separate next group
+  //       if (ids.length <= 0 && match.length <= 0)
+  //         throw Error(
+  //           "makeRegex: cannot have an empty ids and match patterns, please provide atleast one."
+  //         );
+  //       // we're good
+  //       idPrefix = idPrefix ? `(?:${idPrefix})` : ``;
+  //       idPostfix = idPostfix ? `(?:${idPostfix})` : ``;
+  //       groupName = groupName ? `(?<${groupName}>` : `(?<group_${i}>`;
+  //       idStyle = idStyle ? idStyle : "outside";
+  //       if (idPrefix.length <= 0 && ids.length <= 0 && idPostfix.length <= 0)
+  //         ids = "";
+  //       else ids = `(?:${idPrefix}(?:${ids})${idPostfix})`;
+  //       // if (ids.match(/^\(\?\:[|]*\s*[|]*\)$/g)) ids = "";
 
-        // start making regex according to style && resetting temp
-        temp = optional ? ")?" : ")";
-        switch (idStyle) {
-          case "inside":
-          case "insideEnd":
-            temp =
-              groupName +
-              (idStyle === "inside" ? ids + match : match + ids) +
-              temp;
-            break;
-          default:
-          case "outside":
-          case "outsideEnd":
-            // no need for group if match is empty
-            if (match) {
-              temp =
-                groupName +
-                (idStyle === "outside"
-                  ? `(?<=${ids})` + match
-                  : match + `(?=${ids})`) +
-                temp;
-            } else {
-              temp = "";
-            }
-            if (optional && ids.match(/\?\:/g)) ids += "?";
-            temp = idStyle === "outside" ? ids + temp : temp + ids;
-            break;
-        }
-        // 2 separate conditions in case array has only one element
-        if (i === 0) temp = `^${temp}`;
-        if (i === regex.length - 1) temp = `${temp}$`;
-        return temp;
-      })
-      .join("")
-  );
+  //       // start making regex according to style && resetting temp
+  //       temp = optional ? ")?" : ")";
+  //       switch (idStyle) {
+  //         case "inside":
+  //         case "insideEnd":
+  //           temp =
+  //             groupName +
+  //             (idStyle === "inside" ? ids + match : match + ids) +
+  //             temp;
+  //           break;
+  //         default:
+  //         case "outside":
+  //         case "outsideEnd":
+  //           // no need for group if match is empty
+  //           if (match) {
+  //             temp =
+  //               groupName +
+  //               (idStyle === "outside"
+  //                 ? `(?<=${ids})` + match
+  //                 : match + `(?=${ids})`) +
+  //               temp;
+  //           } else {
+  //             temp = "";
+  //           }
+  //           if (optional && ids.match(/\?\:/g)) ids += "?";
+  //           temp = idStyle === "outside" ? ids + temp : temp + ids;
+  //           break;
+  //       }
+  //       // 2 separate conditions in case array has only one element
+  //       if (i === 0) temp = `^${temp}`;
+  //       if (i === regex.length - 1) temp = `${temp}$`;
+  //       return temp;
+  //     })
+  //     .join("")
+  // );
 }
 
 /**
@@ -350,69 +315,69 @@ export function _makeRegex(config: Keys<Config, "regex">) {
  * // "bg-bg"
  * makeClass("bg_bg", {splits: {rule: "_"}})
  */
-export function _makeClass(
-  patterns: string,
-  config?: KeysMaybe<Config, "debug" | "splits">
-) {
-  const { splits, debug } = _mergeDefaults(config);
-  let { classes, group, actions } = patterns.match(
-    `^(?<classes>.*?)` +
-      `((${splits.group})(?<group>.*?)|)` +
-      `((${splits.func})(?<actions>.*?)|)$`
-  ).groups;
-  if (!classes || classes.length <= 0) {
-    console.warn(`cant make style because no tags were provided`);
-    return "cant make style because no tags were provided";
-  }
-  if (!group) group = "";
-  if (debug.style === "class" && classes.startsWith(debug.id)) {
-    debug.style = "on";
-    classes = classes.replace(debug.id, "");
-  }
-  classes = classes.replace(new RegExp(splits.rule, "g"), "-" + group);
-  classes = classes.replace(new RegExp(splits.param, "g"), " ");
-  if (actions) {
-    actions = actions
-      .split(new RegExp(splits.func, "g"))
-      .map((a) => {
-        let { action, short, ownClasses } = a.match(
-          new RegExp(
-            `^(?<action>.*?)` +
-              `((${splits.actionShort})(?<short>.*?)|)` +
-              `((${splits.action})(?<ownClasses>.*?)|)$`
-          )
-        ).groups;
-        if (!action || action.length <= 0)
-          throw Error("makeClasses: action cannot be undefined.");
-        else action += ":";
-        if (!short) short = "$" + action.charAt(0);
-        if (ownClasses) {
-          ownClasses = ownClasses.replace(
-            new RegExp(splits.rule, "g"),
-            "-" + group
-          );
-          return ownClasses
-            .split(new RegExp(splits.param, "g"))
-            .map((o) => (o = action + o + short))
-            .join(" ");
-        }
-        return classes
-          .split(" ")
-          .map((o) => (o = action + o + short))
-          .join(" ");
-      })
-      .join(" ");
-  }
+// export function _makeClass(
+//   patterns: string,
+//   config?: KeysMaybe<Config, "debug" | "splits">
+// ) {
+//   const { splits, debug } = _mergeDefaults(config);
+//   let { classes, group, actions } = patterns.match(
+//     `^(?<classes>.*?)` +
+//       `((${splits.group})(?<group>.*?)|)` +
+//       `((${splits.func})(?<actions>.*?)|)$`
+//   ).groups;
+//   if (!classes || classes.length <= 0) {
+//     console.warn(`cant make style because no tags were provided`);
+//     return "cant make style because no tags were provided";
+//   }
+//   if (!group) group = "";
+//   if (debug.style === "class" && classes.startsWith(debug.id)) {
+//     debug.style = "on";
+//     classes = classes.replace(debug.id, "");
+//   }
+//   classes = classes.replace(new RegExp(splits.rule, "g"), "-" + group);
+//   classes = classes.replace(new RegExp(splits.param, "g"), " ");
+//   if (actions) {
+//     actions = actions
+//       .split(new RegExp(splits.func, "g"))
+//       .map((a) => {
+//         let { action, short, ownClasses } = a.match(
+//           new RegExp(
+//             `^(?<action>.*?)` +
+//               `((${splits.actionShort})(?<short>.*?)|)` +
+//               `((${splits.action})(?<ownClasses>.*?)|)$`
+//           )
+//         ).groups;
+//         if (!action || action.length <= 0)
+//           throw Error("makeClasses: action cannot be undefined.");
+//         else action += ":";
+//         if (!short) short = "$" + action.charAt(0);
+//         if (ownClasses) {
+//           ownClasses = ownClasses.replace(
+//             new RegExp(splits.rule, "g"),
+//             "-" + group
+//           );
+//           return ownClasses
+//             .split(new RegExp(splits.param, "g"))
+//             .map((o) => (o = action + o + short))
+//             .join(" ");
+//         }
+//         return classes
+//           .split(" ")
+//           .map((o) => (o = action + o + short))
+//           .join(" ");
+//       })
+//       .join(" ");
+//   }
 
-  if (debug.style === "on") {
-    console.log("==============");
-    console.info("pattern :: ", patterns.replace(debug.id, ""));
-    console.info("classes :: ", classes);
-    console.info("actions :: ", actions);
-    console.info("fullstr :: ", classes, actions);
-  }
-  return `${classes}${actions ? " " + actions : ""}`;
-}
+//   if (debug.style === "on") {
+//     console.log("==============");
+//     console.info("pattern :: ", patterns.replace(debug.id, ""));
+//     console.info("classes :: ", classes);
+//     console.info("actions :: ", actions);
+//     console.info("fullstr :: ", classes, actions);
+//   }
+//   return `${classes}${actions ? " " + actions : ""}`;
+// }
 
 // -- api
 
@@ -427,35 +392,35 @@ export function _makeClass(
  * // or choose your own prefix
  * makePreflights("src/styles", {unocssConfig: config, ignore: {devFilePrefix: "**"}})
  */
-export function makePreflights(
-  dir: string,
-  config: KeysPick<Config, "unocssConfig", "ignore">
-) {
-  const { ignore, unocssConfig } = _mergeDefaults(config);
-  const layers = Object.values(unocssConfig.layers);
-  fs.readdirSync(path.join(process.cwd(), dir))?.forEach((dirent) => {
-    const ds = dirent.split(".css");
-    // make sure the file we're loading only `.css` files
-    if (ds.length !== 2 || ds[1].length >= 1) {
-      console.log("the following is not loaded in preflights -> ", dirent);
-      return;
-    }
-    if (
-      ds[0].startsWith(ignore.devFilePrefix) &&
-      unocssConfig.envMode === "dev"
-    )
-      return;
-    const filePath = path.join(dir, dirent);
-    const file = fs.readFileSync(filePath, "utf-8");
-    unocssConfig.layers[ds[0]] = ++layers[layers.length - 1];
-    unocssConfig.configDeps.push(filePath);
-    unocssConfig.preflights.push({
-      layer: ds[0],
-      getCSS: () => file,
-    });
-  });
-  return unocssConfig;
-}
+// export function makePreflights(
+//   dir: string,
+//   config: KeysPick<Config, "unocssConfig", "ignore">
+// ) {
+//   const { ignore, unocssConfig } = _mergeDefaults(config);
+//   const layers = Object.values(unocssConfig.layers);
+//   fs.readdirSync(path.join(process.cwd(), dir))?.forEach((dirent) => {
+//     const ds = dirent.split(".css");
+//     // make sure the file we're loading only `.css` files
+//     if (ds.length !== 2 || ds[1].length >= 1) {
+//       console.log("the following is not loaded in preflights -> ", dirent);
+//       return;
+//     }
+//     if (
+//       ds[0].startsWith(ignore.devFilePrefix) &&
+//       unocssConfig.envMode === "dev"
+//     )
+//       return;
+//     const filePath = path.join(dir, dirent);
+//     const file = fs.readFileSync(filePath, "utf-8");
+//     unocssConfig.layers[ds[0]] = ++layers[layers.length - 1];
+//     unocssConfig.configDeps.push(filePath);
+//     unocssConfig.preflights.push({
+//       layer: ds[0],
+//       getCSS: () => file,
+//     });
+//   });
+//   return unocssConfig;
+// }
 
 /**
  * Create a theme function that could be scanned by unocss through variants and rules.
@@ -502,106 +467,106 @@ export function makePreflights(
  * @param variantExp expression through which unocss will find theme classes
  * @returns theme variant and rule-set to be added to unocss's config.
  */
-export function makeThemeRules(
-  config: KeysPick<Config, "unocssConfig", "debug" | "rule" | "splits">
-) {
-  const { unocssConfig, debug, rule, splits } = _mergeDefaults(config);
-  // check if needed transformers exist
-  {
-    const transformersNames = Object.values(unocssConfig.transformers).map(
-      (t) => t.name
-    );
-    rule.transformerDeps.forEach((t) => {
-      if (!transformersNames.includes(t)) {
-        throw Error(
-          "can't make rule without " +
-            t +
-            " transformer, please add it to your unocss config."
-        );
-      }
-    });
-  }
-  if (
-    !rule.mainVar ||
-    rule.mainVar.length <= 0 ||
-    rule.mainVar.match(/^[\W]*$/)
-  ) {
-    console.warn("rule mainVar has been changed to 'theme'");
-    rule.mainVar = "theme";
-  }
-  const ruleExp = new RegExp(
-    "^" + rule.mainVar + rule.connectors + rule.expression + "$"
-  );
-  const variantExp = new RegExp(
-    "^_" +
-      rule.mainVar +
-      rule.connectors +
-      `\\b(${rule.variants.join("|")})` +
-      rule.connectors +
-      rule.expression +
-      "$"
-  );
-  // prepare variants
-  rule.variants.forEach((v, i, arr) => {
-    if (v.length <= 0) arr[i] = splits.rule;
-    else arr[i] = splits.rule + v + splits.rule;
-  });
-  // add theme layer to main themes
-  {
-    const layers = Object.values(unocssConfig.layers);
-    unocssConfig.layers[rule.mainVar] = layers[layers.length - 1] + 1;
-  }
-  // make variants
-  unocssConfig.variants.push((matcher) => {
-    const matches = matcher.match(variantExp);
-    if (!matches || !rule.variants.includes(matches[1])) {
-      return matcher;
-    }
-    return {
-      matcher: matches[2],
-      selector: (s) => {
-        if (rule.variantStyle === "class")
-          return `.${rule.mainVar} ${s}-${matches[1]}`;
-        if (rule.variantStyle === "class-attached")
-          return `.${rule.mainVar}-${matches[1]} ${s}`;
-        if (rule.variantStyle === "variant-prefix")
-          return `.${matches[1]}-${s}`;
-        return `[${rule.mainVar}="${matches[1]}"] ${s}`;
-      },
-    };
-  });
+// export function makeThemeRules(
+//   config: KeysPick<Config, "unocssConfig", "debug" | "rule" | "splits">
+// ) {
+//   const { unocssConfig, debug, rule, splits } = _mergeDefaults(config);
+//   // check if needed transformers exist
+//   {
+//     const transformersNames = Object.values(unocssConfig.transformers).map(
+//       (t) => t.name
+//     );
+//     rule.transformerDeps.forEach((t) => {
+//       if (!transformersNames.includes(t)) {
+//         throw Error(
+//           "can't make rule without " +
+//             t +
+//             " transformer, please add it to your unocss config."
+//         );
+//       }
+//     });
+//   }
+//   if (
+//     !rule.mainVar ||
+//     rule.mainVar.length <= 0 ||
+//     rule.mainVar.match(/^[\W]*$/)
+//   ) {
+//     console.warn("rule mainVar has been changed to 'theme'");
+//     rule.mainVar = "theme";
+//   }
+//   const ruleExp = new RegExp(
+//     "^" + rule.mainVar + rule.connectors + rule.expression + "$"
+//   );
+//   const variantExp = new RegExp(
+//     "^_" +
+//       rule.mainVar +
+//       rule.connectors +
+//       `\\b(${rule.variants.join("|")})` +
+//       rule.connectors +
+//       rule.expression +
+//       "$"
+//   );
+//   // prepare variants
+//   rule.variants.forEach((v, i, arr) => {
+//     if (v.length <= 0) arr[i] = splits.rule;
+//     else arr[i] = splits.rule + v + splits.rule;
+//   });
+//   // add theme layer to main themes
+//   {
+//     const layers = Object.values(unocssConfig.layers);
+//     unocssConfig.layers[rule.mainVar] = layers[layers.length - 1] + 1;
+//   }
+//   // make variants
+//   unocssConfig.variants.push((matcher) => {
+//     const matches = matcher.match(variantExp);
+//     if (!matches || !rule.variants.includes(matches[1])) {
+//       return matcher;
+//     }
+//     return {
+//       matcher: matches[2],
+//       selector: (s) => {
+//         if (rule.variantStyle === "class")
+//           return `.${rule.mainVar} ${s}-${matches[1]}`;
+//         if (rule.variantStyle === "class-attached")
+//           return `.${rule.mainVar}-${matches[1]} ${s}`;
+//         if (rule.variantStyle === "variant-prefix")
+//           return `.${matches[1]}-${s}`;
+//         return `[${rule.mainVar}="${matches[1]}"] ${s}`;
+//       },
+//     };
+//   });
 
-  // make rule
-  unocssConfig.rules.push([
-    ruleExp,
-    ([, match]) => {
-      const result = { [rule.directiveVar]: ` "` };
-      let style = _makeClass(match, { splits, debug }).split(splits.rule);
-      if (style.length <= 1) {
-        console.warn(
-          "theme rule function needs a pattern with a rule" +
-            splits.rule +
-            "color"
-        );
-        console.warn("match is :: ", match);
-        return result + `"`;
-      }
-      // ruleVar value doesn't have to be short and/or
-      // readable because it's never seen or loaded.
-      rule.variants.forEach((t, i) => {
-        if (i === 0) result[rule.directiveVar] += `${style.join(t)}`;
-        else
-          result[rule.directiveVar] +=
-            " _" + rule.mainVar + t + "(" + style.join(t) + ")";
-      });
-      result[rule.directiveVar] += `"`;
-      // console.log(result);
-      return result;
-    },
-    { layer: rule.mainVar },
-  ]);
-  return unocssConfig;
-}
+//   // make rule
+//   unocssConfig.rules.push([
+//     ruleExp,
+//     ([, match]) => {
+//       const result = { [rule.directiveVar]: ` "` };
+//       let style = _makeClass(match, { splits, debug }).split(splits.rule);
+//       if (style.length <= 1) {
+//         console.warn(
+//           "theme rule function needs a pattern with a rule" +
+//             splits.rule +
+//             "color"
+//         );
+//         console.warn("match is :: ", match);
+//         return result + `"`;
+//       }
+//       // ruleVar value doesn't have to be short and/or
+//       // readable because it's never seen or loaded.
+//       rule.variants.forEach((t, i) => {
+//         if (i === 0) result[rule.directiveVar] += `${style.join(t)}`;
+//         else
+//           result[rule.directiveVar] +=
+//             " _" + rule.mainVar + t + "(" + style.join(t) + ")";
+//       });
+//       result[rule.directiveVar] += `"`;
+//       // console.log(result);
+//       return result;
+//     },
+//     { layer: rule.mainVar },
+//   ]);
+//   return unocssConfig;
+// }
 
 /**
  * Create unocss shortcuts and safelists.

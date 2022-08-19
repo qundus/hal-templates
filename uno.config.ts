@@ -15,9 +15,9 @@ import {
 import { colors } from "@unocss/preset-mini/dist/colors.mjs";
 // import { pathTo } from "./tools/helpers";
 import {
-  makePreflights,
-  makeThemeRules,
-  _makeClass,
+  // makePreflights,
+  // makeThemeRules,
+  // _makeClass,
   _makeRegex,
 } from "./tools/helpers/uno.helper";
 
@@ -215,6 +215,8 @@ let config: UserConfig = {
   },
 };
 
+
+// console.log(keyof typeof testConst.hello)
 // collect and load .css style files
 // makePreflights("src/styles");
 // _makeClass("bg-bg_text-t|btn-,hover:text-bg", {
@@ -232,36 +234,37 @@ let config: UserConfig = {
 // });
 
 // _makeClass("bg$bg_text-tGROUPgg-,hover");
-const expr = _makeRegex({
-  regex: [
-    {
-      ids: ["theme", "_theme"],
-      // idStyle: "inside",
-      // optional: true,
-      idPostfix: "[:-]",
-      groupName: "var",
-      match: "",
-      // optional: true,
-    },
-    {
-      ids: "li|da",
-      idPostfix: "[:-]",
-      idStyle: "inside",
-      optional: true,
-      groupName: "theme",
-    },
-    {
-      ids: "",
-      groupName: "pattern",
-      // idPrefix: "[:-][(]?",
-    },
-  ],
-});
+const expr = _makeRegex({});
+// {
+//   regex: [
+//     {
+//       ids: ["theme", "_theme"],
+//       // idStyle: "inside",
+//       // optional: true,
+//       idPostfix: "[:-]",
+//       groupName: "var",
+//       match: "",
+//       // optional: true,
+//     },
+//     {
+//       ids: "li|da",
+//       idPostfix: "[:-]",
+//       idStyle: "inside",
+//       optional: true,
+//       groupName: "theme",
+//     },
+//     {
+//       ids: "",
+//       groupName: "pattern",
+//       // idPrefix: "[:-][(]?",
+//     },
+//   ],
+// }
 // const expr = new RegExp(
 //   `^(?:(?:theme|_theme)(?:[:-]))(?<var>.*?|)(?:li[:-]|)(?<theme>(?<=li[:-]).*?|)$`
 // );
-console.log(expr);
-console.log("asad".match(expr));
+// console.log(expr);
+// console.log("asad".match(expr));
 // console.log("theme:li:".match(expr));
 // console.log("(?: (?:) )".replace(/.$/g, "|)"));
 // console.log("theme:sdaadsd".match(expr));

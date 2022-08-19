@@ -21,6 +21,7 @@
       "@shared/*": ["shared/*"]
     },
     // "watch": true,
+
     "strict": true,
     "noEmit": true,
     "allowJs": false,
@@ -29,12 +30,14 @@
     "noImplicitAny": false,
     "noUnusedLocals": true,
     "isolatedModules": true,
+    // "strictNullChecks": true,
     // "downlevelIteration": true,
     // "traceResolution": true,
     "esModuleInterop": false,
     "resolveJsonModule": true,
     "useDefineForClassFields": true,
-    "exactOptionalPropertyTypes": true,
+    // "exactOptionalPropertyTypes": false,
+    // "noUncheckedIndexedAccess": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true
   }
