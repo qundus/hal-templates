@@ -1,6 +1,6 @@
 // FIRST
 import "uno.css";
-import "virtual:unocss-devtools";
+// import "virtual:unocss-devtools";
 import { render, Component } from "nano-jsx";
 
 // LAST
@@ -64,11 +64,11 @@ class App extends Component<any, State> {
             </Button>
             <p class="mt-5">
               modify
-              <code class="theme:text-code">src/apps/demo/index.tsx</code>to
+              <code class="theme:text$code">src/apps/demo/index.tsx</code>to
               test HMR
             </p>
           </div>
-          <p class="fight$self">Click on any of the logos to learn more</p>
+          <p class="fight$self theme:bg-code">Click on any of the logos to learn more</p>
         </main>
       </>
     );

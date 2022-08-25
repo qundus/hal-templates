@@ -15,10 +15,11 @@ import {
 import { colors } from "@unocss/preset-mini/dist/colors.mjs";
 // import { pathTo } from "./tools/helpers";
 import {
-  // makePreflights,
-  // makeThemeRules,
-  // _makeClass,
+  makePreflights,
+  makeThemeRules,
+  _makeClass,
   _makeRegex,
+  _mergeDefaults,
 } from "./tools/helpers/uno.helper";
 
 const devMode = process.env.inDev;
@@ -45,7 +46,6 @@ let config: UserConfig = {
   transformers: [
     transformerDirectives({ varStyle: "--" }),
     transformerVariantGroup({ separators: [":", "-"] }),
-    // transformerAttributifyJsx(),
   ],
   shortcuts: [
     {
@@ -170,7 +170,7 @@ let config: UserConfig = {
       }, // dark
       ri: {
         bg: colors.sky[400], // bg
-        bg$h: colors.dark[400], // bg
+        bg$h: colors.light[400], // bg
         t: colors.light[300], // text
         code: colors.dark[300], // code tag
         select: {
@@ -215,65 +215,8 @@ let config: UserConfig = {
   },
 };
 
-
-// console.log(keyof typeof testConst.hello)
 // collect and load .css style files
-// makePreflights("src/styles");
-// _makeClass("bg-bg_text-t|btn-,hover:text-bg", {
-// debug: {
-//   style: "class",
-// },
-// splits: { actionShort: "" },
-// group: "btn-",
-// });
-// console.log(makePreflights("src/styles", { unocssConfig: config }));
+config = makePreflights("src/styles", config);
+config = makeThemeRules({ mainVar: "theme", variants: "li|da|ri" }, config, {});
 
-// config = makeThemeRules({
-//   unocssConfig: config,
-//   rule: { variants: "li da ri".split(" ") },
-// });
-
-// _makeClass("bg$bg_text-tGROUPgg-,hover");
-const expr = _makeRegex({});
-// {
-//   regex: [
-//     {
-//       ids: ["theme", "_theme"],
-//       // idStyle: "inside",
-//       // optional: true,
-//       idPostfix: "[:-]",
-//       groupName: "var",
-//       match: "",
-//       // optional: true,
-//     },
-//     {
-//       ids: "li|da",
-//       idPostfix: "[:-]",
-//       idStyle: "inside",
-//       optional: true,
-//       groupName: "theme",
-//     },
-//     {
-//       ids: "",
-//       groupName: "pattern",
-//       // idPrefix: "[:-][(]?",
-//     },
-//   ],
-// }
-// const expr = new RegExp(
-//   `^(?:(?:theme|_theme)(?:[:-]))(?<var>.*?|)(?:li[:-]|)(?<theme>(?<=li[:-]).*?|)$`
-// );
-// console.log(expr);
-// console.log("asad".match(expr));
-// console.log("theme:li:".match(expr));
-// console.log("(?: (?:) )".replace(/.$/g, "|)"));
-// console.log("theme:sdaadsd".match(expr));
-// console.log("theme:li".match(expr));
-// console.log("theme:li:ddasd".match(expr));
-// let expr: string | RegExp = `^(?<classes>.*?)`;
-// expr += `(([|]|GROUP)(?<group>.*?)|)`;
-// expr += `(([,])(?<actions>.*?)|)$`;
-// expr = new RegExp(expr);
-// console.log(expr);
-// console.log("bg$bg_text-t|gg".match(expr));
 export default defineConfig(config);
