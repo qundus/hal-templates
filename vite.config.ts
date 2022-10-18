@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
-import { pathTo } from "./tools/helpers";
-import { viteSetup } from "./tools/helpers/vite.helper";
+import { pathTo } from "./_/helpers";
+import { viteSetup } from "./_/helpers/vite.helper";
 import Unocss from "unocss/vite";
 
 export default defineConfig(({ mode }) => {

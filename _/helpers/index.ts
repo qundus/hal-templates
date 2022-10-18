@@ -39,37 +39,37 @@ export type DeepVoid<
   C extends boolean = true
 > = Extract<T, object> extends never
   ? C extends true
-    ? Exclude<T, TO | TR | void>
-    : Exclude<T, TO>
+  ? Exclude<T, TO | TR | void>
+  : Exclude<T, TO>
   : Omit<
-      { [K in keyof T]-?: T[K] },
-      keyof {
-        [K in keyof T as Extract<TR | void, T[K]> extends never
-          ? Exclude<K, KR>
-          : never]: T[K];
-      }
-    > &
-      Omit<
-        { [K in keyof T]+?: T[K] },
-        keyof {
-          [K in keyof T as Extract<TR | void, T[K]> extends never
-            ? Extract<K, KR>
-            : K]?: T[K];
-        }
-      > extends infer G
-  ? {
-      [K in keyof Omit<G, KO>]:
-        | DeepVoid<
-            Exclude<G[K], TI | any[] | undefined | null>,
-            TI,
-            TO,
-            Extract<keyof G[K], KR>,
-            Extract<keyof G[K], KO>,
-            TR,
-            C
-          >
-        | Extract<G[K], TI | any[]>;
+    { [K in keyof T]-?: T[K] },
+    keyof {
+      [K in keyof T as Extract<TR | void, T[K]> extends never
+      ? Exclude<K, KR>
+      : never]: T[K];
     }
+  > &
+  Omit<
+    { [K in keyof T]+?: T[K] },
+    keyof {
+      [K in keyof T as Extract<TR | void, T[K]> extends never
+      ? Extract<K, KR>
+      : K]?: T[K];
+    }
+  > extends infer G
+  ? {
+    [K in keyof Omit<G, KO>]:
+    | DeepVoid<
+      Exclude<G[K], TI | any[] | undefined | null>,
+      TI,
+      TO,
+      Extract<keyof G[K], KR>,
+      Extract<keyof G[K], KO>,
+      TR,
+      C
+    >
+    | Extract<G[K], TI | any[]>;
+  }
   : never;
 
 /**
@@ -89,12 +89,12 @@ export type FilterKeysOf<
   }
 > extends infer OptionalObject
   ? O extends "optional"
-    ? S extends "asArray"
-      ? keyof OptionalObject
-      : OptionalObject
-    : S extends "asArray"
-    ? Exclude<keyof T, keyof OptionalObject>
-    : Omit<T, keyof OptionalObject>
+  ? S extends "asArray"
+  ? keyof OptionalObject
+  : OptionalObject
+  : S extends "asArray"
+  ? Exclude<keyof T, keyof OptionalObject>
+  : Omit<T, keyof OptionalObject>
   : never;
 
 /**
@@ -109,17 +109,17 @@ export type Pick<
   G extends "include required" | "omit required" = "include required"
 > = G extends "include required"
   ? Omit<
-      T,
-      keyof {
-        [K in keyof T as T extends Record<K, T[K]>
-          ? never
-          : Exclude<K, Q>]: T[K];
-      }
-    >
+    T,
+    keyof {
+      [K in keyof T as T extends Record<K, T[K]>
+      ? never
+      : Exclude<K, Q>]: T[K];
+    }
+  >
   : Omit<
-      T,
-      keyof { [K in keyof T as Extract<Q, K> extends never ? K : never]: T[K] }
-    >;
+    T,
+    keyof { [K in keyof T as Extract<Q, K> extends never ? K : never]: T[K] }
+  >;
 
 /**
  * Check if {@link item} is an object with keys

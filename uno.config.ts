@@ -20,14 +20,15 @@ import {
   _makeClass,
   _makeRegex,
   _mergeDefaults,
-} from "./tools/helpers/uno.helper";
+} from "./_/helpers/uno.helper";
 
-const devMode = process.env.inDev;
+// const devMode = process.env.inDev;
+console.log(process.env);
 let config: UserConfig = {
   // include: /^.*\.(html|css|js|ts|jsx|tsx)$/,
   // include: pathTo("src", "**", "*.{jsx,tsx}"),
   include: "src/**/*.{jsx,tsx}",
-  envMode: devMode ? "dev" : "build",
+  // envMode: devMode ? "dev" : "build",
   presets: [
     presetUno({
       // prefix: "-",
@@ -216,7 +217,7 @@ let config: UserConfig = {
 };
 
 // collect and load .css style files
-config = makePreflights("src/styles", config);
-config = makeThemeRules({ mainVar: "theme", variants: "li|da|ri" }, config, {});
+// config = makePreflights("src/styles", config);
+// config = makeThemeRules({ mainVar: "theme", variants: "li|da|ri" }, config, {});
 
 export default defineConfig(config);
