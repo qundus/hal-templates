@@ -13,9 +13,8 @@ dist-ssr
 *.local
 
 build
-**/.env
-**/.env.*
-!**/.env.example
+.env.secrets*
+!.env.secrets.example
 
 # Editor directories and files
 .vscode/*

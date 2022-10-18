@@ -1,7 +1,15 @@
 import { defineConfig } from "vite";
-import { pathTo } from "./_/helpers";
-import { viteSetup } from "./_/helpers/vite.helper";
+// import { pathTo } from "./_/helpers";
+import { join } from "node:path";
+import { viteSetup } from "./_/sweetjsx/helpers/vite.helper";
 import Unocss from "unocss/vite";
+
+/**
+ * function to help with paths
+ */
+export const pathTo = (...paths: string[]) => {
+  return join(process.cwd(), ...paths);
+};
 
 export default defineConfig(({ mode }) => {
   const { appRoot, env, envDir, dbProxy } = viteSetup(mode);
@@ -19,7 +27,7 @@ export default defineConfig(({ mode }) => {
       jsxFragment: "NanoJSX.Fragment",
     },
     build: {
-      outDir: pathTo("build"),
+      outDir: pathTo("_", "build", "demo"),
       assetsDir: "", // relative to outDir
       emptyOutDir: true,
     },

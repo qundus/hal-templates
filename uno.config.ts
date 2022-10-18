@@ -1,6 +1,6 @@
 /**
- * unocss config style and theming by github.com/neod3v
- * @author neod3v
+ * unocss config style and theming by github.com/qundus
+ * @author qundus
  */
 import {
   defineConfig,
@@ -20,7 +20,7 @@ import {
   _makeClass,
   _makeRegex,
   _mergeDefaults,
-} from "./_/helpers/uno.helper";
+} from "./_/sweetjsx/helpers/uno.helper";
 
 // const devMode = process.env.inDev;
 console.log(process.env);
@@ -28,7 +28,7 @@ let config: UserConfig = {
   // include: /^.*\.(html|css|js|ts|jsx|tsx)$/,
   // include: pathTo("src", "**", "*.{jsx,tsx}"),
   include: "src/**/*.{jsx,tsx}",
-  // envMode: devMode ? "dev" : "build",
+  envMode: "build",
   presets: [
     presetUno({
       // prefix: "-",

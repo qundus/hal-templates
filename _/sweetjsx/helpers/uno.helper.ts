@@ -1,6 +1,6 @@
 /**
- * unocss helpers by github.com/neod3v
- * @author neod3v
+ * unocss helpers by github.com/qundus
+ * @author qundus
  * useful links:
  * https://regex101.com/r/YAEZTX/24
  * https://devhints.io/jsdoc
@@ -224,7 +224,7 @@ type Config = DeepVoid<
   typeof configDefaults,
   UserConfig,
   never
-  // "unocssConfig"
+// "unocssConfig"
 >;
 type ConfigPick<
   T extends keyof Config,
@@ -545,8 +545,8 @@ export function makeThemeRules(
       if (!transformersNames.includes(t)) {
         throw Error(
           "can't make rule without " +
-            t +
-            " transformer, please add it to your unocss config."
+          t +
+          " transformer, please add it to your unocss config."
         );
       }
     });
@@ -635,8 +635,8 @@ export function makeThemeRules(
       if (style.length <= 1) {
         console.warn(
           "theme rule function needs a pattern with a rule" +
-            splits.rule +
-            "tag"
+          splits.rule +
+          "tag"
         );
         return { [rule.directiveVar]: `""` };
       }

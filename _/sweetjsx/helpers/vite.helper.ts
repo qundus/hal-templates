@@ -9,7 +9,7 @@ export function viteSetup(mode) {
   const envDir = join(process.cwd());
   const env = loadEnv(mode, envDir, "_");
   // necessary to spread mode across app
-  if (mode === "development") process.env.inDev = "true";
+  // if (mode === "development") process.env.inDev = "true";
   // process.env = { ...process.env, ...env };
   // define proxy for databases like AceBase and Couchdb
   const dbProxy = {};
