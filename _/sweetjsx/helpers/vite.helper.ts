@@ -2,6 +2,7 @@ import { loadEnv } from "vite";
 import { join } from "path";
 
 export function viteSetup(mode) {
+  process.env.NODE_ENV = mode;
   // getCommands();
   // set which project we're working on
   const appRoot = join(process.cwd(), "src", "apps", "demo");

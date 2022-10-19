@@ -22,13 +22,12 @@ import {
   _mergeDefaults,
 } from "./_/sweetjsx/helpers/uno.helper";
 
-// const devMode = process.env.inDev;
-console.log(process.env);
+const mode = process.env.NODE_ENV;
 let config: UserConfig = {
   // include: /^.*\.(html|css|js|ts|jsx|tsx)$/,
   // include: pathTo("src", "**", "*.{jsx,tsx}"),
   include: "src/**/*.{jsx,tsx}",
-  envMode: "build",
+  envMode: mode === "development" ? "dev" : "build",
   presets: [
     presetUno({
       // prefix: "-",
@@ -217,7 +216,7 @@ let config: UserConfig = {
 };
 
 // collect and load .css style files
-// config = makePreflights("src/styles", config);
-// config = makeThemeRules({ mainVar: "theme", variants: "li|da|ri" }, config, {});
+config = makePreflights("src/styles", config);
+config = makeThemeRules({ mainVar: "theme", variants: "li|da|ri" }, config, { debug: { style: "class" } });
 
 export default defineConfig(config);
