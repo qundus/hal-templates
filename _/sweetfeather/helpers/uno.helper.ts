@@ -6,18 +6,15 @@
  * https://devhints.io/jsdoc
  * https://jsdoc.app/index.html#block-tags
  */
-import { Theme } from "@unocss/preset-mini";
 import fs from "node:fs";
 import path from "node:path";
-import unocss, { UserConfig, mergeDeep, DeepPartial, UserShortcuts } from "unocss";
-import { transformerDirectives } from "unocss";
-import type { DeepVoid, FilterKeysOf, Pick } from ".";
-import { deepMerge } from ".";
+import { UserConfig, UserShortcuts } from "unocss";
+import type { DeepVoid, Pick } from "../types";
+import { deepMerge } from "../types";
 
 // -- types
 /**
- * Used to define config type as well as default values
- * across methods.
+ * Used to define config type as well as default values across methods.
  */
 const configDefaults = {
   /**
@@ -220,17 +217,26 @@ const configDefaults = {
     },
   } as UserConfig,
 };
+
+/**
+ * user config types determined by any methods' parameters.
+ */
 type Config = DeepVoid<
   typeof configDefaults,
   UserConfig,
   never
 // "unocssConfig"
 >;
+
+/**
+ * optional user parameters.
+ */
 type ConfigPick<
   T extends keyof Config,
   Q extends "include required" | "omit required" = "include required"
 > = Pick<Config, T, "omit required">;
 
+// -- core
 /**
  * Fill in the necessary defaults if user hasn't set those properties,
  * only if mergedDefaults is false to avoid duplicate merging
@@ -627,6 +633,8 @@ export function makeThemeRules(
 
 /**
  * Create unocss opinionated shortcuts.
+ * @return unocss helper shortcuts for sizing positioning and so on 
+ * merged with original user config.
  */
 export function makeShortcuts(_unocssConfig: Config["unocssConfig"]) {
   let result: UserShortcuts = [];

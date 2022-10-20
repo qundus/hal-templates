@@ -9,6 +9,6 @@
   },
   "include": [
     "*.config.ts",
-    "_"
+    "_/sweetfeather"
   ]
 }

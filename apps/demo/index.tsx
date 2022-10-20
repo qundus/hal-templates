@@ -1,11 +1,11 @@
 // FIRST
 import "uno.css";
-// import "virtual:unocss-devtools";
+import "virtual:unocss-devtools";
 import { render, Component } from "nano-jsx";
 
 // LAST
-import { Button, Logo, ThemeSwitch } from "@src/components";
-import { Themes } from "@src/models/theme.model";
+import { Button, Logo, ThemeSwitch } from ":components";
+import { Themes } from ":models/theme.model";
 type State = {
   count: number;
   theme: Themes;

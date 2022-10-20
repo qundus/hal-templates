@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
-// import { pathTo } from "./_/helpers";
 import { join } from "node:path";
-import { viteSetup } from "./_/sweetjsx/helpers/vite.helper";
+import { viteSetup } from "./_/sweetfeather/helpers/vite.helper";
 import Unocss from "unocss/vite";
 
 /**
@@ -17,7 +16,7 @@ export default defineConfig(({ mode }) => {
     root: appRoot, // must be scoped for hmr speed
     envDir: envDir,
     base: "",
-    publicDir: pathTo("public"), // don't create 'assets' dir under here
+    publicDir: pathTo("assets"), // don't create 'assets' dir under here
     logLevel: "info",
     clearScreen: false,
     emptyOutDir: true,
@@ -50,10 +49,9 @@ export default defineConfig(({ mode }) => {
       },
     },
     resolve: {
-      alias: {
-        "@src": pathTo("src"),
-        "@shared": pathTo("shared"),
-      },
+      alias: [
+        { find: /^[:](.*)/, replacement: pathTo(`$1`) }
+      ],
     },
     plugins: [Unocss("uno.config.ts")],
   };

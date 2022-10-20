@@ -10,10 +10,8 @@ import {
   presetIcons,
   transformerDirectives,
   transformerVariantGroup,
-  transformerAttributifyJsx,
 } from "unocss";
 import { colors } from "@unocss/preset-mini/dist/colors.mjs";
-// import { pathTo } from "./tools/helpers";
 import {
   makePreflights,
   makeShortcuts,
@@ -21,13 +19,15 @@ import {
   _makeClass,
   _makeRegex,
   _mergeDefaults,
-} from "./_/sweetjsx/helpers/uno.helper";
+} from "./_/sweetfeather/helpers/uno.helper";
 
 const mode = process.env.NODE_ENV;
 let config: UserConfig = {
   // include: /^.*\.(html|css|js|ts|jsx|tsx)$/,
   // include: pathTo("src", "**", "*.{jsx,tsx}"),
-  include: "src/**/*.{jsx,tsx}",
+  // include: "**/*.{jsx,tsx}",
+  // exclude: "/",
+  // include: join(process.cwd(), "**", "*.{tsx,jsx,html}"),
   envMode: mode === "development" ? "dev" : "build",
   presets: [
     presetUno({
@@ -146,8 +146,7 @@ let config: UserConfig = {
   },
 };
 
-// collect and load .css style files
-config = makePreflights("src/styles", config);
+config = makePreflights("styles", config); // collect and load .css style files
 config = makeThemeRules({ mainVar: "theme", variants: "li|da|ri" }, config, { debug: { style: "class" } });
 config = makeShortcuts(config);
 

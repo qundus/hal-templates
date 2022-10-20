@@ -1,6 +1,13 @@
 {
-  "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }],
+  "exclude": [
+    "_",
+    "node_modules"
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ],
   "buildOptions": {
     "verbose": true,
     "traceResolution": true
@@ -13,15 +20,26 @@
     "moduleResolution": "Node",
     "jsx": "react-jsx",
     "jsxImportSource": "nano-jsx/lib",
-    "types": ["node", "vite/client", "nano-jsx/lib", "unocss"],
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "types": [
+      "node",
+      "vite/client",
+      "nano-jsx/lib",
+      "unocss"
+    ],
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext"
+    ],
     "baseUrl": "./",
     "paths": {
-      "@src/*": ["src/*"],
-      "@shared/*": ["shared/*"]
+      ":*": [
+        "*",
+        "!node_modules",
+        "!_"
+      ],
     },
     // "watch": true,
-
     "strict": true,
     "noEmit": true,
     "allowJs": false,

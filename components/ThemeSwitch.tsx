@@ -1,4 +1,4 @@
-import { Themes } from "@src/models/theme.model";
+import { Themes } from ":models/theme.model";
 
 type Props = {
   currentTheme: Themes;

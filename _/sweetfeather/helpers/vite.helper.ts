@@ -5,7 +5,7 @@ export function viteSetup(mode) {
   process.env.NODE_ENV = mode;
   // getCommands();
   // set which project we're working on
-  const appRoot = join(process.cwd(), "src", "apps", "demo");
+  const appRoot = join(process.cwd(), "apps", "demo");
   // set .env files dir
   const envDir = join(process.cwd());
   const env = loadEnv(mode, envDir, "_");
