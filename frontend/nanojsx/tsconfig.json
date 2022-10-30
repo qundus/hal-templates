@@ -1,0 +1,11 @@
+{
+  "extends": "@-/configs.ts/nano-jsx.json",
+  "include": [
+    "."
+  ],
+  "exclude": [
+    "dist",
+    "build",
+    "node_modules"
+  ],
+}

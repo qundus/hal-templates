@@ -1,0 +1,32 @@
+{
+  "name": "portfolio",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "abstract",
+    "apps/*",
+    "backend/*",
+    "frontend/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "build:site:nanojsx": "pnpm build --filter @-/site.nanojsx",
+    "dev": "turbo run dev --parallel",
+    "dev:site:nanojsx": "pnpm dev --filter @-/site.nanojsx",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "clean": "rm pnpm-lock.yaml && pnpm -r exec rm -rf node_modules",
+    "clean:store": "pnpm store prune"
+  },
+  "devDependencies": {
+    "@-/configs.eslint": "workspace:*",
+    "prettier": "latest",
+    "turbo": "latest"
+  },
+  "engines": {
+    "node": ">=18.12.0"
+  },
+  "dependencies": {},
+  "packageManager": "pnpm@7.14.0"
+}

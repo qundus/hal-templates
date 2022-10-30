@@ -1,0 +1,21 @@
+:root {
+  --apply: font-default text-default leading-default antialiased;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
+}
+html,
+body {
+  --apply: "min-w-screen min-h-screen trim$w px-0 m-0";
+}
+a {
+  --apply: font-medium;
+  text-decoration: inherit;
+}
+h1 {
+  --apply: text-2.6rem leading-[1.1];
+}
+button:focus,
+button:focus-visible {
+  --apply: outline-transparent ring-4px;
+}

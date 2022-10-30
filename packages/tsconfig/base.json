@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Default",
+  "compilerOptions": {
+    "outDir": "tsbuild",
+    "declarationDir": "tsbuild",
+    "strict": true,
+    "noEmit": true,
+    "allowJs": false,
+    "composite": false,
+    "declaration": true,
+    "skipLibCheck": true,
+    "inlineSources": false,
+    "noImplicitAny": false,
+    "importHelpers": false,
+    "noUnusedLocals": true,
+    "declarationMap": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "strictNullChecks": false,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "noUnusedParameters": false,
+    "preserveWatchOutput": true,
+    "useDefineForClassFields": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}

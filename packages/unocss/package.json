@@ -1,0 +1,19 @@
+{
+  "name": "@-/configs.unocss",
+  "version": "0.0.1",
+  "private": true,
+  "license": "NOT-LICENSED",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@-/abstract": "workspace:*",
+    "@-/configs.ts": "workspace:*",
+    "@types/node": "^18.6.4",
+    "typescript": "^4.7.4"
+  },
+  "dependencies": {
+    "@unocss/preset-mini": "^0.45.5",
+    "unocss": "^0.45.5"
+  }
+}

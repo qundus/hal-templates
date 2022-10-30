@@ -1,0 +1,31 @@
+{
+  "appId": "com.qundus.nanojsx-portfolio",
+  "productName": "nanojsx-portfolio",
+  "name": "@-/site.nanojsx",
+  "description": "Kickstarter Template In NanoJSX",
+  "version": "0.0.1",
+  "copyright": "Copyright © 2022 qundus",
+  "author": "github/qundus",
+  "private": true,
+  "keywords": [],
+  "license": "NOT-LICENSED",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview",
+    "show": "pnpm build && pnpm serve"
+  },
+  "devDependencies": {
+    "@-/configs.ts": "workspace:*",
+    "@-/configs.unocss": "workspace:*",
+    "@types/node": "^18.11.7",
+    "typescript": "^4.7.4",
+    "unocss": "^0.45.5",
+    "vite": "^3.0.4"
+  },
+  "dependencies": {
+    "@-/components.nanojsx": "workspace:*",
+    "nano-jsx": "^0.0.32"
+  }
+}
