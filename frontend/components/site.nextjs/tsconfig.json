@@ -1,5 +1,5 @@
 {
-  "extends": "@-/configs.ts/nano-jsx.json",
+  "extends": "@-/shared.tsconfig/react-library.json",
   "include": [
     "."
   ],
@@ -7,5 +7,5 @@
     "dist",
     "build",
     "node_modules"
-  ],
+  ]
 }

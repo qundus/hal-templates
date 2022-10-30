@@ -1,5 +1,5 @@
 {
-  "extends": "@-/configs.ts/nano-jsx.json",
+  "extends": "@-/shared.tsconfig/nano-jsx.json",
   "include": [
     "routes",
     "*.config.ts"

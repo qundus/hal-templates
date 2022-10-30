@@ -1,5 +1,5 @@
 {
-  "name": "@-/components.nanojsx",
+  "name": "@-/site.nanojsx.components",
   "version": "0.0.0",
   "main": "./index.tsx",
   "types": "./index.tsx",
@@ -8,7 +8,7 @@
     "lint": "eslint *.ts*"
   },
   "devDependencies": {
-    "@-/configs.ts": "workspace:*",
+    "@-/shared.tsconfig": "workspace:*",
     "@types/node": "^18.11.7",
     "nano-jsx": "^0.0.34"
   },

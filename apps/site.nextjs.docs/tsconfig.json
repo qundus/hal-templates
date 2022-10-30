@@ -1,5 +1,5 @@
 {
-  "extends": "@-/configs.ts/nextjs.json",
+  "extends": "@-/shared.tsconfig/nextjs.json",
   "include": [
     "next-env.d.ts",
     "**/*.ts",

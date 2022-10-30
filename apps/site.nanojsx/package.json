@@ -1,8 +1,8 @@
 {
-  "appId": "com.qundus.nanojsx-portfolio",
-  "productName": "nanojsx-portfolio",
+  "appId": "com.qundus.hal.nanojsx-template",
+  "productName": "hal-nanojsx-template",
   "name": "@-/site.nanojsx",
-  "description": "Kickstarter Template In NanoJSX",
+  "description": "HAL Template In NanoJSX",
   "version": "0.0.1",
   "copyright": "Copyright © 2022 qundus",
   "author": "github/qundus",
@@ -17,15 +17,15 @@
     "show": "pnpm build && pnpm serve"
   },
   "devDependencies": {
-    "@-/configs.ts": "workspace:*",
-    "@-/configs.unocss": "workspace:*",
+    "@-/shared.tsconfig": "workspace:*",
+    "@-/shared.unocss": "workspace:*",
     "@types/node": "^18.11.7",
     "typescript": "^4.7.4",
     "unocss": "^0.45.5",
     "vite": "^3.0.4"
   },
   "dependencies": {
-    "@-/components.nanojsx": "workspace:*",
+    "@-/site.nanojsx.components": "workspace:*",
     "nano-jsx": "^0.0.32"
   }
 }

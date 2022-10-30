@@ -3,11 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "workspaces": [
-    "abstract",
     "apps/*",
-    "backend/*",
-    "frontend/*",
-    "packages/*"
+    "shared/*",
+    "backend/**/*",
+    "frontend/**/*"
   ],
   "scripts": {
     "build": "turbo run build",
@@ -20,7 +19,7 @@
     "clean:store": "pnpm store prune"
   },
   "devDependencies": {
-    "@-/configs.eslint": "workspace:*",
+    "@-/shared.eslint": "workspace:*",
     "prettier": "latest",
     "turbo": "latest"
   },

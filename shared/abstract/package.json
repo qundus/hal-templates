@@ -1,5 +1,5 @@
 {
-  "name": "@-/abstract",
+  "name": "@-/shared.abstract",
   "version": "1.0.0",
   "main": "index.ts",
   "license": "NOT-LICENSED",
