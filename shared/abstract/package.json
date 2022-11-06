@@ -1,9 +1,0 @@
-{
-  "name": "@-/shared.abstract",
-  "version": "1.0.0",
-  "main": "index.ts",
-  "license": "NOT-LICENSED",
-  "devDependencies": {
-    "typescript": "^4.8.4"
-  }
-}

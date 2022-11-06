@@ -1,8 +1,0 @@
-{
-  "extends": "@-/shared.tsconfig/unocss.json",
-  "exclude": [
-    "dist",
-    "build",
-    "node_modules"
-  ]
-}

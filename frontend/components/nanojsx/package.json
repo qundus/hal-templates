@@ -1,0 +1,16 @@
+{
+  "name": "@-/fe.components.nanojsx",
+  "version": "0.0.0",
+  "main": "./index.tsx",
+  "types": "./index.tsx",
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint *.ts*"
+  },
+  "devDependencies": {
+    "@-/shared.node.tsconfig": "workspace:*",
+    "@types/node": "^18.11.7",
+    "nano-jsx": "^0.0.34"
+  },
+  "dependencies": {}
+}

@@ -1,0 +1,11 @@
+{
+  "extends": "@-/shared.node.tsconfig/nano-jsx.json",
+  "include": [
+    "."
+  ],
+  "exclude": [
+    "dist",
+    "build",
+    "node_modules"
+  ],
+}

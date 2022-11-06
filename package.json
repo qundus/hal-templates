@@ -3,23 +3,27 @@
   "version": "0.0.0",
   "private": true,
   "workspaces": [
-    "apps/*",
-    "shared/*",
     "backend/**/*",
-    "frontend/**/*"
+    "frontend/**/*",
+    "fullstack/**/*",
+    "shared/node/*"
   ],
   "scripts": {
-    "build": "turbo run build",
-    "build:site:nanojsx": "pnpm build --filter @-/site.nanojsx",
     "dev": "turbo run dev --parallel",
-    "dev:site:nanojsx": "pnpm dev --filter @-/site.nanojsx",
+    "dev:fe:nanojsx": "pnpm dev --filter @-/fe.apps.nanojsx",
+    "build": "turbo run build --parallel",
+    "build:fe:nanojsx": "pnpm build --filter @-/fe.apps.nanojsx",
+    "serve": "turbo run serve --parallel",
+    "serve:fe:nanojsx": "pnpm serve --filter @-/fe.apps.nanojsx",
+    "demo": "pnpm build && pnpm serve",
+    "demo:fe:nanojsx": "pnpm build:site.nanojsx && pnpm serve:site.nanojsx",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "clean": "rm pnpm-lock.yaml && pnpm -r exec rm -rf node_modules",
     "clean:store": "pnpm store prune"
   },
   "devDependencies": {
-    "@-/shared.eslint": "workspace:*",
+    "@-/shared.node.eslint": "workspace:*",
     "prettier": "latest",
     "turbo": "latest"
   },
