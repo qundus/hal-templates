@@ -1,8 +1,8 @@
 {
-  "appId": "com.qundus.ks.sweetfeather",
-  "productName": "SweetFeather",
-  "name": "sweet-feather",
-  "description": "Kickstarter Template For SweetFeather",
+  "appId": "com.qundus.portfolio.fe.nanojsx",
+  "productName": "Qundus Portfolio-FE W/NanoJSX",
+  "name": "@qundus/portfolio-fe-nanojsx",
+  "description": "Qundus portfolio frontend written in JSX",
   "version": "0.0.1",
   "copyright": "Copyright © 2022 qundus",
   "author": "github/qundus",
@@ -10,9 +10,6 @@
   "keywords": [],
   "license": "NOT-LICENSED",
   "type": "module",
-  "bin": {
-    "sweetfeather": "_/build/sweetfeather.js"
-  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -20,15 +17,10 @@
     "show": "pnpm build && pnpm serve"
   },
   "devDependencies": {
-    "@types/node": "^18.6.4",
-    "@types/yargs": "^17.0.13",
     "@unocss/preset-mini": "^0.45.5",
-    "enquirer": "^2.3.6",
-    "sweet-feather": "link:../sweet-feather",
     "typescript": "^4.7.4",
     "unocss": "^0.45.5",
-    "vite": "^3.0.4",
-    "yargs": "^17.6.0"
+    "vite": "^3.0.4"
   },
   "dependencies": {
     "nano-jsx": "^0.0.32"
