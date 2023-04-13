@@ -1,5 +1,5 @@
 {
-  "extends": "@-/shared.tsconfig/react-library.json",
+  "extends": "@-/shared.node.tsconfig/react-library.json",
   "include": [
     "."
   ],

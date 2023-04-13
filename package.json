@@ -23,7 +23,13 @@
     "clean:store": "pnpm store prune"
   },
   "devDependencies": {
+    "@types/node": "^18.11.9",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@-/shared.node.abstracts": "workspace:*",
     "@-/shared.node.eslint": "workspace:*",
+    "@-/shared.node.tsconfig": "workspace:*",
+    "@-/shared.node.unocss": "workspace:*",
     "prettier": "latest",
     "turbo": "latest"
   },

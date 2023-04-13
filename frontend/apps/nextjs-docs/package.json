@@ -15,10 +15,6 @@
     "react-dom": "18.2.0"
   },
   "devDependencies": {
-    "@-/shared.node.eslint": "workspace:*",
-    "@-/shared.node.tsconfig": "workspace:*",
-    "@types/node": "^17.0.12",
-    "@types/react": "18.0.17",
     "@babel/core": "^7.0.0",
     "eslint": "7.32.0",
     "next-transpile-modules": "9.0.0",
